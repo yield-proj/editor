@@ -1,10 +1,10 @@
 package com.xebisco.yieldengine.uiutils.fields;
 
+import com.xebisco.yieldengine.uiutils.Utils;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.Serializable;
-
-import static com.xebisco.yieldengine.uiutils.Lang.getString;
 
 public class StringFieldPanel extends FieldPanel<Serializable> {
 
@@ -15,7 +15,7 @@ public class StringFieldPanel extends FieldPanel<Serializable> {
         this.textField = textField;
 
         setLayout(new BorderLayout());
-        add(new JLabel(getString(name) + ": "), BorderLayout.WEST);
+        add(new JLabel(Utils.prettyString(name) + ": "), BorderLayout.WEST);
         /*JPanel p = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;

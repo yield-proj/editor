@@ -3,13 +3,11 @@ package com.xebisco.yieldengine.uiutils.fields;
 import com.xebisco.yieldengine.uiutils.Lang;
 import com.xebisco.yieldengine.uiutils.Out;
 import com.xebisco.yieldengine.uiutils.Utils;
+import com.xebisco.yieldengine.uiutils.fields.annotations.FileExtensions;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.io.File;
-
-import static com.xebisco.yieldengine.uiutils.Lang.getString;
 
 public class FilePanel extends FieldPanel<File> {
     private File value;
@@ -39,7 +37,7 @@ public class FilePanel extends FieldPanel<File> {
         setValue(value);
 
         setLayout(new BorderLayout());
-        add(new JLabel(getString(name) + ": "), BorderLayout.WEST);
+        add(new JLabel(Utils.prettyString(name) + ": "), BorderLayout.WEST);
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.LINE_AXIS));
 

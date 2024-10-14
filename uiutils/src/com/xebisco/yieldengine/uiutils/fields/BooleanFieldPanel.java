@@ -1,5 +1,7 @@
 package com.xebisco.yieldengine.uiutils.fields;
 
+import com.xebisco.yieldengine.uiutils.Utils;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -11,7 +13,7 @@ public class BooleanFieldPanel extends FieldPanel<Boolean> {
         super(name, editable);
 
         setLayout(new BorderLayout());
-        checkBox = new JCheckBox(name);
+        checkBox = new JCheckBox(Utils.prettyString(name));
 
         checkBox.setSelected(value);
         checkBox.setEnabled(editable);

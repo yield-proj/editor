@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/YieldEditor.iml" filepath="$PROJECT_DIR$/YieldEditor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jarmng/jarmng.iml" filepath="$PROJECT_DIR$/jarmng/jarmng.iml" />
+      <module fileurl="file://$PROJECT_DIR$/project/project.iml" filepath="$PROJECT_DIR$/project/project.iml" />
       <module fileurl="file://$PROJECT_DIR$/project_editor/project_editor.iml" filepath="$PROJECT_DIR$/project_editor/project_editor.iml" />
       <module fileurl="file://$PROJECT_DIR$/uiutils/uiutils.iml" filepath="$PROJECT_DIR$/uiutils/uiutils.iml" />
     </modules>

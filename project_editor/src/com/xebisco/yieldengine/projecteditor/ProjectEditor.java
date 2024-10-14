@@ -5,6 +5,8 @@ import com.formdev.flatlaf.icons.FlatClearIcon;
 import com.formdev.flatlaf.icons.FlatFileChooserNewFolderIcon;
 import com.formdev.flatlaf.icons.FlatFileViewFloppyDriveIcon;
 import com.formdev.flatlaf.icons.FlatSearchIcon;
+import com.xebisco.yieldengine.jarmng.JarMng;
+import com.xebisco.yieldengine.project.Project;
 import com.xebisco.yieldengine.uiutils.BlurLayerUI;
 import com.xebisco.yieldengine.uiutils.RoundedCellRenderer;
 import com.xebisco.yieldengine.uiutils.Utils;
@@ -12,6 +14,7 @@ import com.xebisco.yieldengine.uiutils.fields.BooleanFieldPanel;
 import com.xebisco.yieldengine.uiutils.fields.ComboFieldPanel;
 import com.xebisco.yieldengine.uiutils.fields.StringFieldPanel;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
@@ -19,10 +22,13 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class ProjectEditor extends JFrame {
@@ -32,9 +38,11 @@ public class ProjectEditor extends JFrame {
     private final JScrollPane projectsScrollPane, workspacesScrollPane;
 
     public static Configurations config;
+    public static final File INSTALLS_FOLDER = new File(System.getProperty("user.home"), ".yieldproj_installs");
 
     static {
-        File workspaceListFile = new File(System.getProperty("user.home"), ".yield_workspaceList");
+        INSTALLS_FOLDER.mkdir();
+        File workspaceListFile = new File(System.getProperty("user.home"), ".yieldproj_workspaceList");
         if (workspaceListFile.exists()) {
             try (ObjectInputStream oi = new ObjectInputStream(new FileInputStream(workspaceListFile))) {
                 //noinspection unchecked
@@ -46,7 +54,7 @@ public class ProjectEditor extends JFrame {
             workspaces = new ArrayList<>();
         }
 
-        File configFile = new File(System.getProperty("user.home"), ".yield_config");
+        File configFile = new File(System.getProperty("user.home"), ".yieldproj_config");
 
         if (configFile.exists()) {
             try (ObjectInputStream oi = new ObjectInputStream(new FileInputStream(configFile))) {
@@ -162,6 +170,14 @@ public class ProjectEditor extends JFrame {
 
         list.setSelectedIndex(0);
 
+        try {
+            Utils.setIcon(ImageIO.read(Objects.requireNonNull(ProjectEditor.class.getResource("/icon/logo1.png"))), this);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        setJMenuBar(new JMenuBar());
+
         setMinimumSize(new Dimension(600, 300));
         setSize(new Dimension(800, 600));
     }
@@ -245,25 +261,25 @@ public class ProjectEditor extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 projectJList.setSelectedIndex(e.getY() / 70);
+                Project project = projectJList.getSelectedValue();
+                File projectFile = new File(project.getDirectory(), "project.serp");
                 if (e.getClickCount() == 2) {
-                    dispose();
-                    openEditor(projectJList.getSelectedValue());
+                    openEditor(project, projectFile);
                     return;
                 }
                 if (e.getX() < projectJList.getWidth() - 70) return;
-                JPopupMenu menu = new JPopupMenu(projectJList.getSelectedValue().getName());
+                JPopupMenu menu = new JPopupMenu(project.getName());
                 menu.add(new AbstractAction("Open in Editor") {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        dispose();
-                        openEditor(projectJList.getSelectedValue());
+                        openEditor(project, projectFile);
                     }
                 });
                 menu.add(new AbstractAction("Open in Explorer") {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            Desktop.getDesktop().open(projectJList.getSelectedValue().getDirectory());
+                            Desktop.getDesktop().open(project.getDirectory());
                         } catch (IOException ex) {
                             Utils.showError(ex.getMessage(), ProjectEditor.this);
                         }
@@ -273,7 +289,7 @@ public class ProjectEditor extends JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         Utils.showMessage("Copied path");
-                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(projectJList.getSelectedValue().getDirectory().getAbsolutePath()), null);
+                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(project.getDirectory().getAbsolutePath()), null);
                     }
                 });
                 menu.show(e.getComponent(), e.getX(), e.getY());
@@ -285,8 +301,21 @@ public class ProjectEditor extends JFrame {
         projectsScrollPane.repaint();
     }
 
-    public static void openEditor(Project project) {
-        //TODO open editor
+    public void openEditor(Object project, File projectFile) {
+        try {
+            JarMng jarMng = new JarMng(new File(".", "/out/artifacts/YieldEditor_jar/YieldEditor.jar"));
+            //Class<?> projectClass = jarMng.getClassForName("com.xebisco.yieldengine.project.Project");
+            Class<?> gameEditorClass = jarMng.getClassForName("com.xebisco.yieldengine.gameeditor.GameEditor");
+            Object gameEditorObject = gameEditorClass.getDeclaredConstructor(Object.class, File.class).newInstance(project, projectFile);
+            Method setVisibleMethod = gameEditorClass.getMethod("setVisible", boolean.class);
+
+            dispose();
+
+            setVisibleMethod.invoke(gameEditorObject, true);
+        } catch (Exception e) {
+            Utils.showError(e, this);
+        }
+
     }
 
     private JPanel tabProjects() {
@@ -331,11 +360,10 @@ public class ProjectEditor extends JFrame {
                         return "Yield Project Files (.serp)";
                     }
                 });
-                if(chooser.showOpenDialog(ProjectEditor.this) == JFileChooser.APPROVE_OPTION) {
+                if (chooser.showOpenDialog(ProjectEditor.this) == JFileChooser.APPROVE_OPTION) {
                     File file = chooser.getSelectedFile();
-                    try(ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(file.toPath()))) {
-                        dispose();
-                        openEditor((Project) oi.readObject());
+                    try (ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(file.toPath()))) {
+                        openEditor(oi.readObject(), file);
                     } catch (IOException | ClassNotFoundException ex) {
                         Utils.showError(ex.getMessage(), ProjectEditor.this);
                     }
@@ -353,19 +381,16 @@ public class ProjectEditor extends JFrame {
         mainButtonsPanel.add(Utils.bigButton(new AbstractAction("New", new FlatFileChooserNewFolderIcon()) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Map<String, Serializable> values = Utils.showOptions("New Project", ProjectEditor.this, false,
-                        new StringFieldPanel("Name", "", true),
-                        new ComboFieldPanel("Template", "", new String[]{"", "Hello, World!"}, true),
-                        new BooleanFieldPanel("Create repository", false, true)
-                );
-                if (values == null) return;
+                NewProjectConfig projectConfig = new NewProjectConfig();
+                if (Utils.showOptions(ProjectEditor.this, false, projectConfig) == null) return;
 
-                String name = (String) values.get("Name");
-                if (name.isBlank()) {
+                if (projectConfig.name.isBlank()) {
                     Utils.showError("Empty Name!", ProjectEditor.this);
                     actionPerformed(null);
                 } else {
-                    Project project = new Project().setName(name);
+                    Project project = new Project();
+
+                    project.setName(projectConfig.name);
 
                     File projectDir = new File(config.workspaceDirectory, project.getName());
                     if (projectDir.mkdirs()) {
@@ -380,6 +405,7 @@ public class ProjectEditor extends JFrame {
                         Utils.showError("Failed to create directory!", ProjectEditor.this);
                     }
                 }
+
             }
         }));
 

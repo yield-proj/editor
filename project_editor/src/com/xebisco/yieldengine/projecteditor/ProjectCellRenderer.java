@@ -1,10 +1,12 @@
 package com.xebisco.yieldengine.projecteditor;
 
 import com.formdev.flatlaf.icons.FlatMenuArrowIcon;
+import com.xebisco.yieldengine.jarmng.JarMng;
+import com.xebisco.yieldengine.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.DateFormat;
+import java.io.File;
 
 public class ProjectCellRenderer implements ListCellRenderer<Project> {
     @Override
@@ -16,13 +18,16 @@ public class ProjectCellRenderer implements ListCellRenderer<Project> {
                 ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setColor(isSelected ? list.getSelectionBackground() : UIManager.getColor("Button.background"));
                 g.fillRoundRect(0, 0, getWidth() - 4, getHeight() - 10, 10, 10);
-                g.setColor(value.isCompatible() ? isSelected ? list.getSelectionForeground() : list.getForeground() : Color.RED);
+                boolean compatible = value.isCompatible();
+                g.setColor(compatible ? isSelected ? list.getSelectionForeground() : list.getForeground() : Color.RED);
                 ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g.setFont(g.getFont().deriveFont(14f));
-                g.drawString(value.getName() + (value.isCompatible() ? "" : " (Incompatible)"), 12, (int) (8 + g.getFontMetrics().getStringBounds(value.getName(), g).getHeight()));
+                String valueName = value.getName();
+                g.drawString(valueName + (compatible ? "" : " (Incompatible)"), 12, (int) (8 + g.getFontMetrics().getStringBounds(valueName, g).getHeight()));
                 g.setColor((isSelected ? list.getSelectionForeground() : list.getForeground()).darker());
                 g.setFont(g.getFont().deriveFont(10f));
-                g.drawString(value.getDirectory().getAbsolutePath(), 12, getHeight() - 24);
+                File directory = value.getDirectory();
+                g.drawString(directory.getAbsolutePath(), 12, getHeight() - 24);
                 //g.drawString(DateFormat.getDateInstance().format(value.getLastModified()), 12, getHeight() - 24);
                 ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 (new FlatMenuArrowIcon()).paintIcon(this, g, getWidth() - 10 - 16, (getHeight() - 10) / 2 - 12 / 2);

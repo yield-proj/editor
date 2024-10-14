@@ -10,5 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="globallibs" level="project" />
     <orderEntry type="module" module-name="uiutils" />
+    <orderEntry type="module" module-name="jarmng" />
+    <orderEntry type="module" module-name="project" />
   </component>
 </module>

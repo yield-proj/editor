@@ -1,7 +1,7 @@
 package com.xebisco.yieldengine.projecteditor;
 
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
-import com.xebisco.yieldengine.uiutils.Utils;
+import com.formdev.flatlaf.util.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +10,10 @@ public class PEEntry {
     public static void main(String[] args) {
         FlatMacDarkLaf.setup();
 
-        JFrame.setDefaultLookAndFeelDecorated(true);
+        if (SystemInfo.isLinux) {
+            JFrame.setDefaultLookAndFeelDecorated(true);
+            JDialog.setDefaultLookAndFeelDecorated(true);
+        }
 
         UIManager.put("SearchField.searchIconColor", Color.WHITE);
         UIManager.put("Actions.Grey", Color.WHITE);

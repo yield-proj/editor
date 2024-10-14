@@ -1,12 +1,16 @@
 package com.xebisco.yieldengine.uiutils;
 
 import com.formdev.flatlaf.icons.FlatClearIcon;
+import com.github.weisj.jsvg.nodes.Title;
+import com.xebisco.yieldengine.uiutils.fields.annotations.Config;
 import com.xebisco.yieldengine.uiutils.fields.FieldPanel;
 import com.xebisco.yieldengine.uiutils.fields.FieldsPanel;
-import com.xebisco.yieldengine.uiutils.fields.FileExtensions;
+import com.xebisco.yieldengine.uiutils.fields.annotations.FileExtensions;
 import sun.reflect.annotation.AnnotationParser;
 
 import javax.swing.*;
+import javax.swing.Timer;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
 import java.awt.Point;
 import java.awt.*;
@@ -19,10 +23,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public class Utils {
     public static final FileExtensions IMAGE_FILE_EXTENSIONS = getFileExtensionsInstance(new String[]{"PNG", "JPG", "JPEG", "BMP", "WBMP", "GIF"}, "Image Files");
@@ -50,8 +52,22 @@ public class Utils {
         }
     }*/
 
+    public static void setIcon(Image icon, Window window) {
+        java.util.List<Image> icons = new ArrayList<>();
+        icons.add(icon.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
+        icons.add(icon.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+        icons.add(icon.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
+        icons.add(icon.getScaledInstance(128, 128, Image.SCALE_SMOOTH));
+        icons.add(icon);
+        window.setIconImages(icons);
+    }
+
     public static void showError(String error, Window owner) {
         JOptionPane.showMessageDialog(owner, error, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static void showError(Exception e, Window owner) {
+        showError(e.getClass().getName() + ": " + e.getMessage(), owner);
     }
 
     public static JButton bigButton(AbstractAction button) {
@@ -59,6 +75,117 @@ public class Utils {
         //b.setBorderPainted(false);
         b.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         return b;
+    }
+
+    public static Object[] showSettings(String title, Window owner, boolean showApplyButton, Object[] fieldss) {
+
+        JDialog dialog = new JDialog(owner, Dialog.DEFAULT_MODALITY_TYPE);
+        dialog.setTitle(title);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setMinimumSize(new Dimension(600, 500));
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        dialog.add(splitPane);
+
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        splitPane.setRightComponent(scrollPane);
+
+        Map<String, Pair<FieldsPanel, Object>> tabList = new HashMap<>();
+        for (Object tab : fieldss) {
+            FieldsPanel p = FieldsPanel.fromClass(tab);
+            p.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(40, 10, 10, 10), "<html><h1>" + tab.getClass().getAnnotation(Config.class).title() + "</h1></html>", TitledBorder.LEFT, TitledBorder.TOP));
+            tabList.put(tab.getClass().getAnnotation(Config.class).title(), new Pair<>(p, tab));
+        }
+
+        JList<String> tabs = new JList<>(tabList.keySet().toArray(new String[0]));
+        tabs.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tabs.setBackground(dialog.getBackground());
+        tabs.addListSelectionListener(_ -> {
+            scrollPane.setViewportView(tabList.get(tabs.getSelectedValue()).first);
+            scrollPane.getVerticalScrollBar().setValue(0);
+            splitPane.updateUI();
+        });
+        tabs.setCellRenderer(new RoundedCellRenderer());
+
+        JScrollPane tabsPane = new JScrollPane(tabs);
+        tabsPane.setBorder(null);
+        tabsPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        splitPane.setLeftComponent(tabsPane);
+
+        tabs.setSelectedIndex(0);
+
+        for (WindowFocusListener windowFocusListener : owner.getWindowFocusListeners()) {
+            windowFocusListener.windowLostFocus(null);
+        }
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton okButton = new JButton(new AbstractAction("OK") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                for(Pair<FieldsPanel, Object> pair : tabList.values()) {
+                    pair.first.saveToObject(pair.second);
+                }
+                dialog.dispose();
+            }
+        });
+
+        buttonPanel.add(okButton);
+        dialog.getRootPane().setDefaultButton(okButton);
+
+        JButton cancelButton = new JButton(new AbstractAction("Cancel") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        buttonPanel.add(cancelButton);
+
+        if (showApplyButton) {
+            JButton applyButton = new JButton(new AbstractAction("Apply") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    for(Pair<FieldsPanel, Object> pair : tabList.values()) {
+                        pair.first.saveToObject(pair.second);
+                    }
+                }
+            });
+            buttonPanel.add(applyButton);
+        }
+
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+
+        dialog.setLocationRelativeTo(owner);
+        dialog.setVisible(true);
+
+        return fieldss;
+    }
+
+    public static String prettyString(String s) {
+        if (s.isEmpty()) return s;
+        StringBuilder builder = new StringBuilder().append(Character.toUpperCase(s.charAt(0)));
+        for (int i = 1; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (Character.isUpperCase(c)) {
+                if (!Character.isUpperCase(s.charAt(i - 1)) && !Character.isWhitespace(s.charAt(i - 1))) {
+                    builder.append(" ");
+                }
+            }
+            builder.append(c);
+        }
+        return builder.toString();
+    }
+
+    public static <T> T showOptions(Window owner, boolean showApplyButton, T fields) {
+        Config ann = fields.getClass().getAnnotation(Config.class);
+        HashMap<String, Serializable> values = showOptions(ann.title(), owner, showApplyButton, FieldsPanel.fromClass(fields).getFieldPanels());
+        if (values == null) return null;
+        FieldsPanel.saveToObject(fields, values);
+        return fields;
     }
 
     public static HashMap<String, Serializable> showOptions(String title, Window owner, boolean showApplyButton, FieldPanel<?>... fieldPanels) {
@@ -89,6 +216,15 @@ public class Utils {
         buttonPanel.add(okButton);
         dialog.getRootPane().setDefaultButton(okButton);
 
+        JButton cancelButton = new JButton(new AbstractAction("Cancel") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        buttonPanel.add(cancelButton);
+
         if (showApplyButton) {
             JButton applyButton = new JButton(new AbstractAction("Apply") {
                 @Override
@@ -98,15 +234,6 @@ public class Utils {
             });
             buttonPanel.add(applyButton);
         }
-
-        JButton cancelButton = new JButton(new AbstractAction("Cancel") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dialog.dispose();
-            }
-        });
-
-        buttonPanel.add(cancelButton);
 
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         dialog.add(fieldsPanel);
@@ -121,6 +248,10 @@ public class Utils {
     }
 
     private static java.util.List<JDialog> messages = new ArrayList<>();
+
+    public static boolean confirm(Window owner, String message) {
+        return JOptionPane.showConfirmDialog(owner, message, "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+    }
 
     public static void showMessage(String message, Runnable open, Date date) {
         boolean[] ignore = new boolean[]{false};
@@ -139,7 +270,7 @@ public class Utils {
         label.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) {
+                if (e.getClickCount() == 2) {
                     ignore[0] = true;
                     dialog.dispose();
                     messages.remove(dialog);
@@ -211,8 +342,8 @@ public class Utils {
 
         while (!pass && t < 100) {
             t++;
-            for(JDialog d : messages) {
-                if(d.getX() == dialog.getX() && d.getY() == dialog.getY()) {
+            for (JDialog d : messages) {
+                if (d.getX() == dialog.getX() && d.getY() == dialog.getY()) {
                     dialog.setLocation(d.getX(), dialog.getY() - 120);
                 }
             }

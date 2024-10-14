@@ -1,12 +1,9 @@
 package com.xebisco.yieldengine.uiutils.fields;
 
-import com.xebisco.yieldengine.uiutils.Out;
+import com.xebisco.yieldengine.uiutils.Utils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-
-import static com.xebisco.yieldengine.uiutils.Lang.getString;
 
 public class ColorFieldPanel extends FieldPanel<Color> {
 
@@ -33,7 +30,7 @@ public class ColorFieldPanel extends FieldPanel<Color> {
         /*colorButton.setBorderPainted(false);
         colorButton.setContentAreaFilled(false);*/
 
-        add(new JLabel(getString(name) + ": "), BorderLayout.WEST);
+        add(new JLabel(Utils.prettyString(name) + ": "), BorderLayout.WEST);
 
         JPanel p = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();

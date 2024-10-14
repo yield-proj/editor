@@ -1,5 +1,10 @@
 package com.xebisco.yieldengine.uiutils.fields;
 
+import com.xebisco.yieldengine.uiutils.fields.annotations.ComboStrings;
+import com.xebisco.yieldengine.uiutils.fields.annotations.Editable;
+import com.xebisco.yieldengine.uiutils.fields.annotations.FileExtensions;
+import com.xebisco.yieldengine.uiutils.fields.annotations.Visible;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -23,9 +28,9 @@ public class FieldsPanel extends JPanel {
         }
     }
 
-    public static <T> FieldsPanel fromClass(Class<T> clazz, T o) {
+    public static FieldsPanel fromClass(Object o) {
         List<FieldPanel<?>> fieldPanels = new ArrayList<>();
-        for (Field field : clazz.getDeclaredFields()) {
+        for (Field field : o.getClass().getDeclaredFields()) {
             if (field.isAnnotationPresent(Visible.class)) {
                 boolean editable = true;
                 if (field.isAnnotationPresent(Editable.class)) {
@@ -50,10 +55,14 @@ public class FieldsPanel extends JPanel {
                         } else if (field.getType().isAssignableFrom(double.class)) {
                             fieldPanels.add(new NumberFieldPanel<>(field.getName(), (double) fieldObject, true, editable));
                         } else {
-                            System.err.println("WARNING: " + clazz + ", " + field.getName() + ", " + field.getType() + " ignored.");
+                            System.err.println("WARNING: " + o.getClass() + ", " + field.getName() + ", " + field.getType() + " ignored.");
                         }
                     } else if (field.getType().isAssignableFrom(String.class)) {
-                        fieldPanels.add(new StringFieldPanel(field.getName(), (String) fieldObject, editable));
+                        if(field.isAnnotationPresent(ComboStrings.class)) {
+                            fieldPanels.add(new ComboFieldPanel(field.getName(), (String) fieldObject, field.getAnnotation(ComboStrings.class).values(), editable));
+                        } else {
+                            fieldPanels.add(new StringFieldPanel(field.getName(), (String) fieldObject, editable));
+                        }
                     } else if (field.getType().isAssignableFrom(File.class)) {
                         FileExtensions extensions = null;
                         if (field.isAnnotationPresent(FileExtensions.class)) {
@@ -61,7 +70,7 @@ public class FieldsPanel extends JPanel {
                         }
                         fieldPanels.add(new FilePanel(field.getName(), (File) fieldObject, extensions, editable));
                     } else {
-                        System.err.println("WARNING: " + clazz + ", " + field.getName() + ", " + field.getType() + " ignored.");
+                        System.err.println("WARNING: " + o.getClass() + ", " + field.getName() + ", " + field.getType() + " ignored.");
                     }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);

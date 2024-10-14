@@ -2,6 +2,7 @@ package com.xebisco.yieldengine.uiutils.fields;
 
 import com.xebisco.yieldengine.uiutils.NumberField;
 import com.xebisco.yieldengine.uiutils.Point;
+import com.xebisco.yieldengine.uiutils.Utils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +17,7 @@ public class PointFieldPanel<T extends Number> extends FieldPanel<com.xebisco.yi
         super(name, editable);
 
         setLayout(new BorderLayout());
-        add(new JLabel(getString(name) + ": "), BorderLayout.WEST);
+        add(new JLabel(Utils.prettyString(name) + ": "), BorderLayout.WEST);
 
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.X_AXIS));

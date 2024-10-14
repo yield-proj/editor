@@ -1,9 +1,9 @@
 package com.xebisco.yieldengine.uiutils.fields;
 
+import com.xebisco.yieldengine.uiutils.Utils;
+
 import javax.swing.*;
 import java.awt.*;
-
-import static com.xebisco.yieldengine.uiutils.Lang.getString;
 
 public class ComboFieldPanel extends FieldPanel<String> {
     private final JComboBox<String> comboBox;
@@ -11,7 +11,7 @@ public class ComboFieldPanel extends FieldPanel<String> {
     public ComboFieldPanel(String name, String selected, String[] options, boolean editable) {
         super(name, editable);
         setLayout(new BorderLayout());
-        add(new JLabel(getString(name) + ": "), BorderLayout.WEST);
+        add(new JLabel(Utils.prettyString(name) + ": "), BorderLayout.WEST);
         comboBox = new JComboBox<>(options);
         comboBox.setSelectedItem(selected);
         comboBox.setEditable(false);
