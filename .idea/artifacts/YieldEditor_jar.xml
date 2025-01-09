@@ -1,0 +1,19 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="YieldEditor:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/YieldEditor_jar</output-path>
+    <root id="archive" name="YieldEditor.jar">
+      <element id="module-output" name="YieldEditor" />
+      <element id="module-output" name="uiutils" />
+      <element id="module-output" name="jarmng" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/globallibs/jsvg-1.6.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/globallibs/flatlaf-3.5.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/slf4j-api-2.0.16.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/globallibs/flatlaf-extras-3.5.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/annotations-lib/yield-annotations.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/yield-core.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/yield-alimpl.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/yield-glimpl.jar" path-in-jar="/" />
+      <element id="module-output" name="shipruntime" />
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="project:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/project_jar</output-path>
+    <root id="archive" name="project.jar">
+      <element id="module-output" name="project" />
+      <element id="module-output" name="uiutils" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/globallibs/jsvg-1.6.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/globallibs/flatlaf-3.5.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/slf4j-api-2.0.16.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/globallibs/flatlaf-extras-3.5.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/annotations-lib/yield-annotations.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
