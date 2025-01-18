@@ -1,6 +1,7 @@
 package com.xebisco.yieldengine.gameeditor;
 
-import com.xebisco.yieldengine.uilib.ProjectEditor;
+import com.xebisco.yieldengine.gameeditor.settings.Settings;
+import com.xebisco.yieldengine.uilib.SettingsWindow;
 import com.xebisco.yieldengine.uilib.UIUtils;
 import com.xebisco.yieldengine.uilib.projectmng.ProjectMng;
 
@@ -12,7 +13,10 @@ public class Main {
         UIUtils.setupLaf();
 
         SwingUtilities.invokeAndWait(() -> {
-            ProjectMng mng = new ProjectMng(ProjectEditor.class);
+            SettingsWindow.APP_NAME = "yield_editor";
+            SettingsWindow.INSTANCE = new com.xebisco.yieldengine.gameeditor.settings.Settings();
+            SettingsWindow.loadSettings(Settings.class);
+            ProjectMng mng = new ProjectMng(GameEditor.class, GameProject.class);
             mng.setLocationRelativeTo(null);
             mng.setVisible(true);
         });

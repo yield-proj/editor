@@ -7,15 +7,13 @@ import com.xebisco.yieldengine.core.Scene;
 import com.xebisco.yieldengine.core.camera.OrthoCamera;
 import com.xebisco.yieldengine.core.components.Rectangle;
 import com.xebisco.yieldengine.gameeditor.editorfactories.MousePosition;
-import com.xebisco.yieldengine.gameeditor.editorfactories.components.EntitySelector;
-import com.xebisco.yieldengine.gameeditor.editorfactories.components.GridPainter;
+import com.xebisco.yieldengine.gameeditor.editorfactories.components.EntitySelectorComp;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
-import com.xebisco.yieldengine.uilib.IconCache;
-import com.xebisco.yieldengine.uilib.UIUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,8 +21,10 @@ public class EntityListEditor extends JPanel {
     private Scene scene, sceneEditor;
     private final JToolBar toolBar;
     private final JLabel titleLabel = new JLabel();
+    private final JPanel gamePanel;
 
-    public EntityListEditor(JPanel game) {
+    public EntityListEditor(JPanel gamePanel) {
+        setLayout(new BorderLayout());
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -32,8 +32,9 @@ public class EntityListEditor extends JPanel {
                 updateRes();
             }
         });
-        add(game);
-        game.addFocusListener(new FocusAdapter() {
+        this.gamePanel = gamePanel;
+        add(gamePanel);
+        gamePanel.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 updateValues();
@@ -53,7 +54,7 @@ public class EntityListEditor extends JPanel {
                 UIUtils.showOptions(SwingUtilities.getWindowAncestor(EntityListEditor.this), true, Objects.requireNonNull(getComponentInEntities(sceneEditor.getEntities(), GridPainter.class)));
             }
         }));*/
-        add(toolBar, BorderLayout.NORTH);
+        //add(toolBar, BorderLayout.NORTH);
     }
 
     public void showNewEntityPopup(List<EntityFactory> factories) {
@@ -93,7 +94,7 @@ public class EntityListEditor extends JPanel {
         sceneEditor.setBackgroundColor(scene.getBackgroundColor());
     }
 
-    private <T extends Component> T getComponentInEntities(List<Entity> entities, Class<T> componentClass) {
+    private <T extends Component> T getComponentInEntities(Collection<Entity> entities, Class<T> componentClass) {
         for (Entity e : entities) {
             Component c;
             if ((c = e.getComponent(componentClass)) != null) {
@@ -105,7 +106,7 @@ public class EntityListEditor extends JPanel {
     }
 
     public void updateRes() {
-        ((OrthoCamera) sceneEditor.getCamera()).getViewport().set(getSize().getWidth(), getSize().getHeight());
+        ((OrthoCamera) sceneEditor.getCamera()).getViewport().set(gamePanel.getSize().getWidth(), gamePanel.getSize().getHeight() + 10);
     }
 
     public Object getScene() {
@@ -123,7 +124,7 @@ public class EntityListEditor extends JPanel {
 
     public EntityListEditor setSceneEditor(Scene sceneEditor) {
         this.sceneEditor = sceneEditor;
-        Objects.requireNonNull(getComponentInEntities(sceneEditor.getEntities(), EntitySelector.class)).setEntityListEditor(this);
+        Objects.requireNonNull(getComponentInEntities(sceneEditor.getEntities(), EntitySelectorComp.class)).setEntityListEditor(this);
         updateRes();
         return this;
     }

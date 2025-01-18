@@ -17,6 +17,8 @@ import com.xebisco.yieldengine.utils.Editable;
 import com.xebisco.yieldengine.utils.Visible;
 import org.joml.Vector2f;
 
+import static com.xebisco.yieldengine.gameeditor.editorfactories.MousePosition.lockToGrid;
+
 public class GridPainter extends Component implements IPainter {
 
     @Visible
@@ -25,7 +27,7 @@ public class GridPainter extends Component implements IPainter {
 
     @Visible
     @Editable
-    private boolean paint = true, lockToGrid;
+    private boolean paint = true;
 
     @Visible
     @Editable
@@ -41,23 +43,20 @@ public class GridPainter extends Component implements IPainter {
         OrthoCamera cam = ((OrthoCamera) Global.getCurrentScene().getCamera());
         float mx = cam.getTransform().getTranslation().x() + Input.getInstance().getMousePosition().x() * cam.getViewport().x() * cam.getTransform().getScale().x() - cam.getViewport().x() / 2f * cam.getTransform().getScale().x(),
                 my = cam.getTransform().getTranslation().y() + Input.getInstance().getMousePosition().y() * cam.getViewport().y() * cam.getTransform().getScale().y() - cam.getViewport().y() / 2f * cam.getTransform().getScale().y();
-        if(Input.getInstance().isKeyPressed(Key.VK_G)) {
-            if(!actCtrlLock) {
+        if (Input.getInstance().isKeyPressed(Key.VK_G)) {
+            if (!actCtrlLock) {
                 lockToGrid = !lockToGrid;
                 actCtrlLock = true;
             }
         } else {
             actCtrlLock = false;
         }
-        if (lockToGrid) {
-            MousePosition.X = (int) ((int) (Math.abs(mx) + size.x() / 2f) / size.x()) * size.x();
-            MousePosition.Y = (int) ((int) (-Math.abs(my) - size.y() / 2f) / size.y()) * size.y();
-            if (mx < 0) MousePosition.X *= -1;
-            if (my > 0) MousePosition.Y *= -1;
-        } else {
-            MousePosition.X = mx;
-            MousePosition.Y = my;
-        }
+        MousePosition.GX = (int) ((int) (Math.abs(mx) + size.x() / 2f) / size.x()) * size.x();
+        MousePosition.GY = (int) ((int) (-Math.abs(my) - size.y() / 2f) / size.y()) * size.y();
+        if (mx < 0) MousePosition.GX *= -1;
+        if (my > 0) MousePosition.GY *= -1;
+        MousePosition.X = mx;
+        MousePosition.Y = my;
     }
 
     @Override
@@ -94,7 +93,7 @@ public class GridPainter extends Component implements IPainter {
     private void drawMousePoint(Graphics g, OrthoCamera cam) {
         Paint paint = new Paint()
                 .setColor(ColorUtils.argb(0x90FF0000))
-                .setTransform(new Transform().translate(MousePosition.X, MousePosition.Y));
+                .setTransform(new Transform().translate(MousePosition.GX, MousePosition.GY));
         g.getG1().drawEllipse(14 * cam.getTransform().getScale().x(), 14 * cam.getTransform().getScale().y(), paint);
     }
 

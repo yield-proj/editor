@@ -8,13 +8,11 @@ import com.xebisco.yieldengine.core.input.Axis;
 import com.xebisco.yieldengine.core.input.Input;
 import com.xebisco.yieldengine.core.input.Key;
 import com.xebisco.yieldengine.core.input.MouseButton;
-import com.xebisco.yieldengine.utils.Visible;
+import com.xebisco.yieldengine.gameeditor.settings.Settings;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 public class CamControlComp extends Component {
-    @Visible
-    private float cameraSpeed = 400f, zoomIntensity = 5f;
 
     Axis back = new Axis(Key.VK_BACK_SPACE);
     private float lastMouseX, lastMouseY;
@@ -33,8 +31,8 @@ public class CamControlComp extends Component {
 
         cam.getTransform().translate(
                         new Vector2f(Axis.HORIZONTAL.getValue(), Axis.VERTICAL.getValue())
-                                .mul(cameraSpeed * Time.getDeltaTime() * cam.getTransform().getScale().x()))
-                .scale(new Vector3f(-Input.getInstance().getScrollWheel() * Time.getDeltaTime() * zoomIntensity, -Input.getInstance().getScrollWheel() * Time.getDeltaTime() * zoomIntensity, 0));
+                                .mul(Settings.getInstance().CAMERA_SETTINGS.cameraSpeed * Time.getDeltaTime() * cam.getTransform().getScale().x()))
+                .scale(new Vector3f(-Input.getInstance().getScrollWheel() * Time.getDeltaTime() * Settings.getInstance().CAMERA_SETTINGS.zoomIntensity, -Input.getInstance().getScrollWheel() * Time.getDeltaTime() * Settings.getInstance().CAMERA_SETTINGS.zoomIntensity, 0));
         if (Input.getInstance().isKeyPressed(Key.VK_BACK_SPACE))
             cam.getTransform().scale(new Vector3f(back.getValue() * Time.getDeltaTime(), back.getValue() * Time.getDeltaTime(), 0));
 
