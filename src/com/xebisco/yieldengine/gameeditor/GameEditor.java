@@ -1,6 +1,5 @@
 package com.xebisco.yieldengine.gameeditor;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.xebisco.yieldengine.core.EntityFactory;
 import com.xebisco.yieldengine.core.Global;
 import com.xebisco.yieldengine.core.LoopContext;
@@ -34,6 +33,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
     public static final long BUILD = 0;
     private EntityListEditor entityListEditor;
     private final JFrame frame;
+    private final JSplitPane gameInspectorPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
     public GameEditor(Project project) {
         super(project);
@@ -59,9 +59,16 @@ public class GameEditor extends ProjectEditor<GameProject> {
             public void windowClosing(WindowEvent e) {
                 if (UIUtils.confirm(frame, "Confirm exit?")) {
                     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    deviceObject.runCloseHooks();
                 } else {
                     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                 }
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+                if (Inspector.SAVE_TIMER != null)
+                    Inspector.SAVE_TIMER.stop();
             }
         });
         updateDialog();
@@ -73,13 +80,28 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         editorEngine(contentPane);
 
-        frame.add(contentPane);
+        gameInspectorPane.setLeftComponent(contentPane);
+
+        Inspector.set(null);
+
+        gameInspectorPane.setRightComponent(Inspector.INSPECTOR_PANEL);
+        gameInspectorPane.setResizeWeight(1);
+
+        frame.add(gameInspectorPane);
         frame.setVisible(true);
+
+        SwingUtilities.invokeLater(() -> {
+            gameInspectorPane.setDividerLocation(.8);
+        });
     }
+
+    private OGLPanel deviceObject;
 
     public void editorEngine(JPanel p) {
         try {
-            OGLPanel deviceObject = (OGLPanel) Global.getOpenGLOpenALLCP0(-1, -1);
+            deviceObject = (OGLPanel) Global.getOpenGLOpenALLCP0(-1, -1);
+
+            deviceObject.setIgnoreCloseHooks(true);
 
             p.add(entityListEditor = new EntityListEditor((deviceObject.getContentPane())));
 
@@ -91,7 +113,14 @@ public class GameEditor extends ProjectEditor<GameProject> {
                     setScene(new Scene(new ArrayList<>()));
 
                     loopContext.startThread();
-                    frame.getRootPane().updateUI();
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        frame.getRootPane().updateUI();
+                    });
                 } catch (Throwable e) {
                     UIUtils.error(e, frame);
                     throw new RuntimeException(e);
@@ -160,7 +189,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         fileMenu.add(saveProjectItem);
 
-        JMenuItem settingsMenuItem = new JMenuItem("Settings...", new FlatSVGIcon(GameEditor.class.getResource("/icon/settings.svg")));
+        JMenuItem settingsMenuItem = new JMenuItem("Settings...");
         settingsMenuItem.setMnemonic('T');
         settingsMenuItem.addActionListener(_ -> {
             SettingsWindow.openSettings(frame);

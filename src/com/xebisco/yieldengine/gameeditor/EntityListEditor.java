@@ -107,6 +107,7 @@ public class EntityListEditor extends JPanel {
 
     public void updateRes() {
         ((OrthoCamera) sceneEditor.getCamera()).getViewport().set(gamePanel.getSize().getWidth(), gamePanel.getSize().getHeight() + 10);
+        setMinimumSize(new Dimension(0, 0));
     }
 
     public Object getScene() {

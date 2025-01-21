@@ -9,6 +9,7 @@ import com.xebisco.yieldengine.core.input.Input;
 import com.xebisco.yieldengine.core.input.MouseButton;
 import com.xebisco.yieldengine.core.io.texture.Texture;
 import com.xebisco.yieldengine.gameeditor.EntityListEditor;
+import com.xebisco.yieldengine.gameeditor.Inspector;
 import com.xebisco.yieldengine.gameeditor.editorfactories.MousePosition;
 import com.xebisco.yieldengine.gameeditor.settings.Settings;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
@@ -46,6 +47,7 @@ public class EntitySelectorComp extends Component implements IPainter {
                             Transform t = f.getTransform();
                             if (t.getTranslation().distance(new Vector3f(MousePosition.X, MousePosition.Y, 0)) < Settings.getInstance().ENTITY_SELECTOR.selectorMinimumDistance * cam.getTransform().getScale().x()) {
                                 selectedFactory = (PreMadeEntityFactory) factory;
+                                Inspector.set(selectedFactory);
                                 break;
                             }
                         }
