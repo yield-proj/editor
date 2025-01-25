@@ -8,6 +8,7 @@ import com.xebisco.yieldengine.core.camera.OrthoCamera;
 import com.xebisco.yieldengine.core.components.Rectangle;
 import com.xebisco.yieldengine.gameeditor.editorfactories.MousePosition;
 import com.xebisco.yieldengine.gameeditor.editorfactories.components.EntitySelectorComp;
+import com.xebisco.yieldengine.glimpl.window.OGLPanel;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
 
 import javax.swing.*;
@@ -21,9 +22,9 @@ public class EntityListEditor extends JPanel {
     private Scene scene, sceneEditor;
     private final JToolBar toolBar;
     private final JLabel titleLabel = new JLabel();
-    private final JPanel gamePanel;
+    private final OGLPanel gamePanel;
 
-    public EntityListEditor(JPanel gamePanel) {
+    public EntityListEditor(OGLPanel gamePanel) {
         setLayout(new BorderLayout());
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -33,11 +34,17 @@ public class EntityListEditor extends JPanel {
             }
         });
         this.gamePanel = gamePanel;
-        add(gamePanel);
-        gamePanel.addFocusListener(new FocusAdapter() {
+        add(gamePanel.getContentPane());
+        gamePanel.getContentPane().addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 updateValues();
+            }
+        });
+        gamePanel.getCanvas().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                gamePanel.getContentPane().requestFocus();
             }
         });
 
@@ -77,7 +84,7 @@ public class EntityListEditor extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 PreMadeEntityFactory factory = new PreMadeEntityFactory();
                 factory.getTransform().translate(mx, my);
-                factory.getComponents().add(new Rectangle());
+                factory.setComponents(new Component[]{new Rectangle()});
                 factories.add(factory);
             }
         });
@@ -89,7 +96,7 @@ public class EntityListEditor extends JPanel {
     }
 
     private void updateValues() {
-        if(scene == null) return;
+        if (scene == null) return;
         titleLabel.setText(scene.getName());
         sceneEditor.setBackgroundColor(scene.getBackgroundColor());
     }
@@ -106,7 +113,7 @@ public class EntityListEditor extends JPanel {
     }
 
     public void updateRes() {
-        ((OrthoCamera) sceneEditor.getCamera()).getViewport().set(gamePanel.getSize().getWidth(), gamePanel.getSize().getHeight() + 10);
+        ((OrthoCamera) sceneEditor.getCamera()).getViewport().set(gamePanel.getCanvas().getSize().getWidth(), gamePanel.getCanvas().getHeight() + 10);
         setMinimumSize(new Dimension(0, 0));
     }
 

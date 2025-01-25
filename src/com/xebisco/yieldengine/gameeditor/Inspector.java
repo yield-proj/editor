@@ -1,6 +1,5 @@
 package com.xebisco.yieldengine.gameeditor;
 
-import com.xebisco.yieldengine.core.Component;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
 import com.xebisco.yieldengine.uilib.UIUtils;
 import com.xebisco.yieldengine.utils.Pair;
@@ -13,14 +12,16 @@ public class Inspector {
     public final static JPanel INSPECTOR_PANEL = new JPanel(new BorderLayout());
     public static Timer SAVE_TIMER;
     private final static JScrollPane SCROLL_PANE = new JScrollPane();
+    private static boolean movingEntity = false;
+    private static PreMadeEntityFactory entity;
 
     static {
         INSPECTOR_PANEL.add(SCROLL_PANE, BorderLayout.CENTER);
     }
 
     public static void set(PreMadeEntityFactory entity) {
-
-        if(SAVE_TIMER != null) SAVE_TIMER.stop();
+        Inspector.entity = entity;
+        if (SAVE_TIMER != null) SAVE_TIMER.stop();
 
         java.util.List<Runnable> applyList = new ArrayList<>();
 
@@ -29,14 +30,17 @@ public class Inspector {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        if(entity != null) {
-            SAVE_TIMER = new Timer(200, _ -> applyList.forEach(Runnable::run));
+        if (entity != null) {
+            SAVE_TIMER = new Timer(100, _ -> {
+                if (!movingEntity)
+                    applyList.forEach(Runnable::run);
+            });
             SAVE_TIMER.start();
-            for(Component component : entity.getComponents()) {
-                Pair<Runnable, JPanel> p = getComponentPanel(component);
-                panel.add(p.second());
-                applyList.add(p.first());
-            }
+
+            Pair<Runnable, JPanel> p = UIUtils.getObjectsFieldsPanel(new Object[]{entity});
+
+            panel.add(p.second());
+            applyList.add(p.first());
         } else {
             panel.add(new JLabel("Empty"));
         }
@@ -47,7 +51,14 @@ public class Inspector {
         INSPECTOR_PANEL.repaint();
     }
 
-    public static Pair<Runnable, JPanel> getComponentPanel(Component component) {
-        return UIUtils.getObjectsFieldsPanel(new Object[]{component});
+    public static boolean isMovingEntity() {
+        return movingEntity;
+    }
+
+    public static void setMovingEntity(boolean movingEntity) {
+        if(Inspector.movingEntity && !movingEntity) {
+            set(entity);
+        }
+        Inspector.movingEntity = movingEntity;
     }
 }

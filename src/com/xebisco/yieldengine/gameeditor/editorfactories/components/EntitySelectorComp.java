@@ -7,6 +7,7 @@ import com.xebisco.yieldengine.core.graphics.IPainter;
 import com.xebisco.yieldengine.core.graphics.yldg1.Paint;
 import com.xebisco.yieldengine.core.input.Input;
 import com.xebisco.yieldengine.core.input.MouseButton;
+import com.xebisco.yieldengine.core.io.IO;
 import com.xebisco.yieldengine.core.io.texture.Texture;
 import com.xebisco.yieldengine.gameeditor.EntityListEditor;
 import com.xebisco.yieldengine.gameeditor.Inspector;
@@ -23,7 +24,7 @@ public class EntitySelectorComp extends Component implements IPainter {
     private boolean rightClickLock, leftClickLock, blockSelection, xSel, ySel, movX, movY;
     private float clickX, clickY;
 
-    private Texture arrowTexture = new Texture("uiimages/arrow.png");
+    private Texture arrowTexture = IO.getInstance().loadTexture("uiimages/arrow.png");
 
     @Override
     public void onUpdate() {
@@ -116,6 +117,8 @@ public class EntitySelectorComp extends Component implements IPainter {
                 clickY = MousePosition.Y;
             }
         }
+
+        Inspector.setMovingEntity((movX || movY) && selectedFactory != null);
     }
 
     @Override
@@ -134,14 +137,14 @@ public class EntitySelectorComp extends Component implements IPainter {
 
         //Y GREEN
 
-        paint.setTransform(new Transform(entityTransform)
+        paint.setTransform(new Transform().translate(entityTransform.getTranslation())
                 .translate(0, h / 2f));
         paint.setColor(ySel || movY ? ColorPalette.Colors.WHITE.get() : ColorPalette.Colors.GREEN.get());
         g.getG1().drawImage(w, h, paint);
 
         //X RED
 
-        paint.setTransform(new Transform(entityTransform)
+        paint.setTransform(new Transform().translate(entityTransform.getTranslation())
                 .rotateZ((float) Math.toRadians(-90))
                 .translate(h / 2, 0));
 
@@ -149,7 +152,7 @@ public class EntitySelectorComp extends Component implements IPainter {
 
         g.getG1().drawImage(w, h, paint);
 
-        paint.setTransform(entityTransform);
+        paint.setTransform(new Transform().translate(entityTransform.getTranslation()));
         paint.setColor(ColorPalette.Colors.WHITE.get());
 
         g.getG1().drawEllipse(8 * cam.getTransform().getScale().x(), 8 * cam.getTransform().getScale().y(), paint);

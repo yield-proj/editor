@@ -9,6 +9,7 @@ import com.xebisco.yieldengine.core.graphics.IPainter;
 import com.xebisco.yieldengine.core.graphics.yldg1.Paint;
 import com.xebisco.yieldengine.core.input.Input;
 import com.xebisco.yieldengine.core.input.Key;
+import com.xebisco.yieldengine.core.io.IO;
 import com.xebisco.yieldengine.core.io.text.Font;
 import com.xebisco.yieldengine.gameeditor.editorfactories.MousePosition;
 import com.xebisco.yieldengine.utils.Color4f;
@@ -33,7 +34,7 @@ public class GridPainter extends Component implements IPainter {
     @Editable
     private Color4f color = ColorUtils.argb(0x60333333);
 
-    private final Font infoFont = new Font("OpenSans-Regular.ttf", 12f, true);
+    private final Font infoFont = IO.getInstance().loadFont("OpenSans-Regular.ttf", 12f, true);
 
 
     private boolean actCtrlLock;
@@ -87,7 +88,7 @@ public class GridPainter extends Component implements IPainter {
         g.getG1().drawText(text, paint);
 
         paint.setColor(ColorUtils.argb(0x60606060));
-        g.getG1().drawRect(width + 10, infoFont.getSize() + 4, paint);
+        g.getG1().drawRect(width + 10, infoFont.getProperties().getSize() + 4, paint);
     }
 
     private void drawMousePoint(Graphics g, OrthoCamera cam) {

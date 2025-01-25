@@ -103,7 +103,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
             deviceObject.setIgnoreCloseHooks(true);
 
-            p.add(entityListEditor = new EntityListEditor((deviceObject.getContentPane())));
+            p.add(entityListEditor = new EntityListEditor((deviceObject)));
 
             CompletableFuture.runAsync(() -> {
                 try {

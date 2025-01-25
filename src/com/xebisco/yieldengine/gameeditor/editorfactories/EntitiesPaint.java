@@ -9,7 +9,9 @@ public class EntitiesPaint implements EntityFactory {
     @Override
     public Entity createEntity() {
         Entity e = new Entity("EntitiesPaint", new Transform());
-        e.getComponents().add(new EntitiesPaintComp());
+        e.addComponents(
+                new EntitiesPaintComp()
+        );
         return e;
     }
 }

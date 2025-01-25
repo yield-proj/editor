@@ -4,11 +4,14 @@ import com.xebisco.yieldengine.core.Component;
 import com.xebisco.yieldengine.core.Entity;
 import com.xebisco.yieldengine.core.EntityFactory;
 import com.xebisco.yieldengine.core.Transform;
+import com.xebisco.yieldengine.utils.AltArray;
+import com.xebisco.yieldengine.utils.CustomAdd;
 import com.xebisco.yieldengine.utils.Editable;
 import com.xebisco.yieldengine.utils.Visible;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PreMadeEntityFactory implements EntityFactory, Serializable {
@@ -16,10 +19,13 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
     @Editable
     private String name = "Empty Entity";
     @Visible
-    private final Transform transform = new Transform();
+    @Editable
+    private Transform transform = new Transform();
     @Visible
     @Editable
-    private final List<Component> components = new ArrayList<>();
+    @AltArray
+    @CustomAdd(addAction = "com.xebisco.yieldengine.gameeditor.AddComponent")
+    private Component[] components = new Component[0];
 
     private final List<EntityFactory> children = new ArrayList<>();
 
@@ -28,7 +34,7 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
     @Override
     public Entity createEntity() {
         Entity e = new Entity(name, transform);
-        e.getComponents().addAll(components);
+        Collections.addAll(e.getComponents(), components);
         for(EntityFactory child : children)
             e.getChildren().add(child.createEntity());
 
@@ -58,8 +64,13 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
         return transform;
     }
 
-    public List<Component> getComponents() {
+    public Component[] getComponents() {
         return components;
+    }
+
+    public PreMadeEntityFactory setComponents(Component[] components) {
+        this.components = components;
+        return this;
     }
 
     public List<EntityFactory> getChildren() {
