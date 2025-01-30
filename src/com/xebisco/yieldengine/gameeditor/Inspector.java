@@ -6,6 +6,8 @@ import com.xebisco.yieldengine.utils.Pair;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 
 public class Inspector {
@@ -16,7 +18,15 @@ public class Inspector {
     private static PreMadeEntityFactory entity;
 
     static {
+        INSPECTOR_PANEL.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
         INSPECTOR_PANEL.add(SCROLL_PANE, BorderLayout.CENTER);
+        INSPECTOR_PANEL.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (entity != null)
+                    set(entity);
+            }
+        });
     }
 
     public static void set(PreMadeEntityFactory entity) {
@@ -26,6 +36,7 @@ public class Inspector {
         java.util.List<Runnable> applyList = new ArrayList<>();
 
         SCROLL_PANE.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        SCROLL_PANE.setMinimumSize(new Dimension(100, 100));
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -56,7 +67,7 @@ public class Inspector {
     }
 
     public static void setMovingEntity(boolean movingEntity) {
-        if(Inspector.movingEntity && !movingEntity) {
+        if (Inspector.movingEntity && !movingEntity) {
             set(entity);
         }
         Inspector.movingEntity = movingEntity;

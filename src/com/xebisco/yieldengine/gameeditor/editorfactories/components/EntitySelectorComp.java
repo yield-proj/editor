@@ -24,7 +24,7 @@ public class EntitySelectorComp extends Component implements IPainter {
     private boolean rightClickLock, leftClickLock, blockSelection, xSel, ySel, movX, movY;
     private float clickX, clickY;
 
-    private Texture arrowTexture = IO.getInstance().loadTexture("uiimages/arrow.png");
+    private Texture arrowTexture = IO.getInstance().loadTexture("editoruires/arrow.png");
 
     @Override
     public void onUpdate() {

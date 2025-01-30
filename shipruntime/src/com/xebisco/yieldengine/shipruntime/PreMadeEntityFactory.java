@@ -28,6 +28,7 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
     private Component[] components = new Component[0];
 
     private final List<EntityFactory> children = new ArrayList<>();
+    private PreMadeEntityFactory parent;
 
     private transient Entity tempEntity;
 
@@ -39,6 +40,13 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
             e.getChildren().add(child.createEntity());
 
         return e;
+    }
+
+    public Transform getNewWorldTransform() {
+        if(parent == null) return transform;
+        Transform worldTransform = new Transform(parent.getNewWorldTransform());
+        worldTransform.getTransformMatrix().translationRotateScale(worldTransform.getTranslation(), worldTransform.getNormalizedRotation(),  worldTransform.getScale());
+        return worldTransform;
     }
 
     public Entity getTempEntity() {

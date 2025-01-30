@@ -26,15 +26,16 @@ public class EntitiesPaintComp extends Component implements IPainter {
 
         for (EntityFactory factory : Global.getCurrentScene().getEntityFactories()) {
             if (factory instanceof PreMadeEntityFactory f) {
+                Transform transform = new Transform(f.getNewWorldTransform());
                 Paint paint = new Paint();
                 paint.setCamera(cam);
                 for (Component c : f.getComponents()) {
                     if (c instanceof IPainter p) {
-                        c.setWorldTransform(f.getTransform());
+                        c.setWorldTransform(transform);
                         p.onPaint(g);
                     }
                 }
-                toDrawBalls.add(f.getTransform().getTranslation());
+                toDrawBalls.add(transform.getTranslation());
             }
         }
         Paint ballsPaint = new Paint();

@@ -1,5 +1,6 @@
 package com.xebisco.yieldengine.gameeditor;
 
+import com.formdev.flatlaf.extras.components.FlatTabbedPane;
 import com.xebisco.yieldengine.core.EntityFactory;
 import com.xebisco.yieldengine.core.Global;
 import com.xebisco.yieldengine.core.LoopContext;
@@ -24,6 +25,7 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +36,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
     private EntityListEditor entityListEditor;
     private final JFrame frame;
     private final JSplitPane gameInspectorPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    private final FlatTabbedPane rightTabbedPane = new FlatTabbedPane();
 
     public GameEditor(Project project) {
         super(project);
@@ -56,6 +59,11 @@ public class GameEditor extends ProjectEditor<GameProject> {
             }
         });
         frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent e) {
+                setProjectFolder();
+            }
+
             public void windowClosing(WindowEvent e) {
                 if (UIUtils.confirm(frame, "Confirm exit?")) {
                     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -84,15 +92,34 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         Inspector.set(null);
 
-        gameInspectorPane.setRightComponent(Inspector.INSPECTOR_PANEL);
+        rightTabbedPane.addTab("Inspector", Inspector.INSPECTOR_PANEL);
+
+        gameInspectorPane.setRightComponent(rightTabbedPane);
         gameInspectorPane.setResizeWeight(1);
 
         frame.add(gameInspectorPane);
+
+        setProjectFolder();
+
+        //SETUP project
+        Main.getAssetsFolder();
+
+        try {
+            Files.copy(Objects.requireNonNull(GameEditor.class.getResourceAsStream("/OpenSans-Regular.ttf")), Main.getAsset("OpenSans-Regular.ttf").toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(Objects.requireNonNull(GameEditor.class.getResourceAsStream("/yieldIcon.png")), Main.getAsset("yieldIcon.png").toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         frame.setVisible(true);
 
         SwingUtilities.invokeLater(() -> {
             gameInspectorPane.setDividerLocation(.8);
         });
+    }
+
+    private void setProjectFolder() {
+        Main.setProjectFolder(getProject().getProjectDir());
     }
 
     private OGLPanel deviceObject;
@@ -108,7 +135,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
             CompletableFuture.runAsync(() -> {
                 try {
                     Thread.sleep(100);
-                    LoopContext loopContext = Global.getOpenGLOpenALLCP1(deviceObject);
+                    LoopContext loopContext = Global.getOpenGLOpenALLCP1(deviceObject, new EditorPathGetter());
 
                     setScene(new Scene(new ArrayList<>()));
 

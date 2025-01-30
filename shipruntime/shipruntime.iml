@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="yield-uilib" level="project" />
     <orderEntry type="library" name="yield-core" level="project" />
+    <orderEntry type="library" name="libs" level="project" />
   </component>
 </module>
