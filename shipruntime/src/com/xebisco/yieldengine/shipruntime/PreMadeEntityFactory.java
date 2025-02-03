@@ -1,9 +1,6 @@
 package com.xebisco.yieldengine.shipruntime;
 
-import com.xebisco.yieldengine.core.Component;
-import com.xebisco.yieldengine.core.Entity;
-import com.xebisco.yieldengine.core.EntityFactory;
-import com.xebisco.yieldengine.core.Transform;
+import com.xebisco.yieldengine.core.*;
 import com.xebisco.yieldengine.utils.AltArray;
 import com.xebisco.yieldengine.utils.CustomAdd;
 import com.xebisco.yieldengine.utils.Editable;
@@ -17,7 +14,7 @@ import java.util.List;
 public class PreMadeEntityFactory implements EntityFactory, Serializable {
     @Visible
     @Editable
-    private String name = "Empty Entity";
+    private EntityHeader header = new EntityHeader("Entity Name");
     @Visible
     @Editable
     private Transform transform = new Transform();
@@ -34,7 +31,7 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
 
     @Override
     public Entity createEntity() {
-        Entity e = new Entity(name, transform);
+        Entity e = new Entity(header, transform);
         Collections.addAll(e.getComponents(), components);
         for(EntityFactory child : children)
             e.getChildren().add(child.createEntity());
@@ -59,12 +56,26 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
         return this;
     }
 
-    public String getName() {
-        return name;
+    public EntityHeader getHeader() {
+        return header;
     }
 
-    public PreMadeEntityFactory setName(String name) {
-        this.name = name;
+    public PreMadeEntityFactory setHeader(EntityHeader header) {
+        this.header = header;
+        return this;
+    }
+
+    public PreMadeEntityFactory setTransform(Transform transform) {
+        this.transform = transform;
+        return this;
+    }
+
+    public PreMadeEntityFactory getParent() {
+        return parent;
+    }
+
+    public PreMadeEntityFactory setParent(PreMadeEntityFactory parent) {
+        this.parent = parent;
         return this;
     }
 

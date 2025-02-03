@@ -114,7 +114,8 @@ public class GameEditor extends ProjectEditor<GameProject> {
         frame.setVisible(true);
 
         SwingUtilities.invokeLater(() -> {
-            gameInspectorPane.setDividerLocation(.8);
+            gameInspectorPane.setDividerLocation(gameInspectorPane.getWidth() - 350);
+            gameInspectorPane.updateUI();
         });
     }
 

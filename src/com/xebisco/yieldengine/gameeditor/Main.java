@@ -1,11 +1,13 @@
 package com.xebisco.yieldengine.gameeditor;
 
+import com.xebisco.yieldengine.core.EntityHeader;
 import com.xebisco.yieldengine.core.Transform;
 import com.xebisco.yieldengine.core.io.audio.Audio;
 import com.xebisco.yieldengine.core.io.text.Font;
 import com.xebisco.yieldengine.core.io.texture.Texture;
 import com.xebisco.yieldengine.gameeditor.fields.AudioField;
 import com.xebisco.yieldengine.gameeditor.fields.FontField;
+import com.xebisco.yieldengine.gameeditor.fields.HeaderField;
 import com.xebisco.yieldengine.gameeditor.fields.TextureField;
 import com.xebisco.yieldengine.gameeditor.settings.Settings;
 import com.xebisco.yieldengine.uilib.SettingsWindow;
@@ -29,6 +31,8 @@ public class Main {
         UIUtils.RETURN_FIELD_MAP.put(Font.class, (name, value, editable, field) -> new FontField(name, (Font) value, field.getAnnotation(FileExtensions.class), editable));
         UIUtils.RETURN_FIELD_MAP.put(Texture.class, (name, value, editable, field) -> new TextureField(name, (Texture) value, field.getAnnotation(FileExtensions.class), editable));
         UIUtils.RETURN_FIELD_MAP.put(Audio.class, (name, value, editable, field) -> new AudioField(name, (Audio) value, field.getAnnotation(FileExtensions.class), editable));
+
+        UIUtils.RETURN_FIELD_MAP.put(EntityHeader.class, (_, value, _, _) -> new HeaderField((EntityHeader) value));
 
         SwingUtilities.invokeAndWait(() -> {
             SettingsWindow.APP_NAME = "yield_editor";

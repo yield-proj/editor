@@ -18,6 +18,7 @@ public class Inspector {
     private static PreMadeEntityFactory entity;
 
     static {
+        INSPECTOR_PANEL.setMinimumSize(new Dimension(320, 320));
         INSPECTOR_PANEL.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
         INSPECTOR_PANEL.add(SCROLL_PANE, BorderLayout.CENTER);
         INSPECTOR_PANEL.addComponentListener(new ComponentAdapter() {
@@ -59,7 +60,7 @@ public class Inspector {
 
         SCROLL_PANE.setBorder(null);
 
-        INSPECTOR_PANEL.repaint();
+        //INSPECTOR_PANEL.repaint();
     }
 
     public static boolean isMovingEntity() {
