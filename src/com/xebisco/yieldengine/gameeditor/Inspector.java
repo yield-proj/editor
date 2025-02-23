@@ -1,5 +1,6 @@
 package com.xebisco.yieldengine.gameeditor;
 
+import com.xebisco.yieldengine.gameeditor.editorfactories.components.EntitySelectorComp;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
 import com.xebisco.yieldengine.uilib.UIUtils;
 import com.xebisco.yieldengine.utils.Pair;
@@ -18,7 +19,7 @@ public class Inspector {
     private static PreMadeEntityFactory entity;
 
     static {
-        INSPECTOR_PANEL.setMinimumSize(new Dimension(320, 320));
+        INSPECTOR_PANEL.setMinimumSize(new Dimension(400, 400));
         INSPECTOR_PANEL.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
         INSPECTOR_PANEL.add(SCROLL_PANE, BorderLayout.CENTER);
         INSPECTOR_PANEL.addComponentListener(new ComponentAdapter() {
@@ -28,6 +29,13 @@ public class Inspector {
                     set(entity);
             }
         });
+    }
+
+    public static void setGlobal(PreMadeEntityFactory entity, boolean changeTree) {
+        EntitySelectorComp.selectedFactory = entity;
+        if (changeTree)
+            EntityListEditor.setSelected(entity);
+        set(entity);
     }
 
     public static void set(PreMadeEntityFactory entity) {
@@ -72,5 +80,9 @@ public class Inspector {
             set(entity);
         }
         Inspector.movingEntity = movingEntity;
+    }
+
+    public static PreMadeEntityFactory getEntity() {
+        return entity;
     }
 }

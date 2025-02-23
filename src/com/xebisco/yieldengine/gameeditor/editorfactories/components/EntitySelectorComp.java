@@ -19,12 +19,24 @@ import org.joml.Vector3f;
 
 public class EntitySelectorComp extends Component implements IPainter {
     private EntityListEditor entityListEditor;
-    private PreMadeEntityFactory selectedFactory;
+    public static PreMadeEntityFactory selectedFactory;
 
     private boolean rightClickLock, leftClickLock, blockSelection, xSel, ySel, movX, movY;
     private float clickX, clickY;
 
     private Texture arrowTexture = IO.getInstance().loadTexture("editoruires/arrow.png");
+
+    public PreMadeEntityFactory getFac(OrthoCamera cam) {
+        for (EntityFactory factory : entityListEditor.getScene().getEntityFactories()) {
+            if (factory instanceof PreMadeEntityFactory f) {
+                Transform t = f.getTransform();
+                if (t.getTranslation().distance(new Vector3f(MousePosition.X, MousePosition.Y, 0)) < Settings.getInstance().ENTITY_SELECTOR.selectorMinimumDistance * cam.getTransform().getScale().x()) {
+                    return (PreMadeEntityFactory) factory;
+                }
+            }
+        }
+        return null;
+    }
 
     @Override
     public void onUpdate() {
@@ -33,7 +45,12 @@ public class EntitySelectorComp extends Component implements IPainter {
         if (Input.getInstance().isMouseButtonPressed(MouseButton.BUTTON_3)) {
             if (!rightClickLock) {
                 rightClickLock = true;
-                entityListEditor.showNewEntityPopup(Global.getCurrentScene().getEntityFactories());
+                PreMadeEntityFactory fac = getFac(cam);
+                if (fac != null) {
+                    entityListEditor.showNewEntityPopup(fac.getChildren(), fac);
+                } else {
+                    entityListEditor.showNewEntityPopup(entityListEditor.getScene().getEntityFactories(), null);
+                }
             }
         } else {
             rightClickLock = false;
@@ -43,16 +60,9 @@ public class EntitySelectorComp extends Component implements IPainter {
                 leftClickLock = true;
                 if (!blockSelection) {
                     selectedFactory = null;
-                    for (EntityFactory factory : Global.getCurrentScene().getEntityFactories()) {
-                        if (factory instanceof PreMadeEntityFactory f) {
-                            Transform t = f.getTransform();
-                            if (t.getTranslation().distance(new Vector3f(MousePosition.X, MousePosition.Y, 0)) < Settings.getInstance().ENTITY_SELECTOR.selectorMinimumDistance * cam.getTransform().getScale().x()) {
-                                selectedFactory = (PreMadeEntityFactory) factory;
-                                Inspector.set(selectedFactory);
-                                break;
-                            }
-                        }
-
+                    PreMadeEntityFactory fac = getFac(cam);
+                    if (fac != null) {
+                        Inspector.setGlobal(fac, true);
                     }
                 }
                 clickX = MousePosition.X;
@@ -72,7 +82,7 @@ public class EntitySelectorComp extends Component implements IPainter {
             float w = arrowTexture.getWidth() * cam.getTransform().getScale().x();
             float h = arrowTexture.getHeight() * cam.getTransform().getScale().y();
 
-            Transform entityTransform = selectedFactory.getTransform();
+            Transform entityTransform = selectedFactory.getNewWorldTransform();
 
             //Y
             ySel = MousePosition.X >= entityTransform.getTranslation().x() - w / 4 && MousePosition.X <= entityTransform.getTranslation().x() + w / 4
@@ -95,7 +105,7 @@ public class EntitySelectorComp extends Component implements IPainter {
 
         if (movX && selectedFactory != null) {
             if (MousePosition.lockToGrid) {
-                selectedFactory.getTransform().translate(MousePosition.GX - selectedFactory.getTransform().getTranslation().x(), 0);
+                selectedFactory.getTransform().translate(MousePosition.GX - selectedFactory.getNewWorldTransform().getTranslation().x(), 0);
             } else {
                 selectedFactory.getTransform().translate(MousePosition.X - clickX, 0);
                 clickX = MousePosition.X;
@@ -111,7 +121,7 @@ public class EntitySelectorComp extends Component implements IPainter {
 
         if (movY && selectedFactory != null) {
             if (MousePosition.lockToGrid) {
-                selectedFactory.getTransform().translate(0, MousePosition.GY - selectedFactory.getTransform().getTranslation().y());
+                selectedFactory.getTransform().translate(0, MousePosition.GY - selectedFactory.getNewWorldTransform().getTranslation().y());
             } else {
                 selectedFactory.getTransform().translate(0, MousePosition.Y - clickY);
                 clickY = MousePosition.Y;
@@ -133,7 +143,7 @@ public class EntitySelectorComp extends Component implements IPainter {
         float w = arrowTexture.getWidth() * cam.getTransform().getScale().x();
         float h = arrowTexture.getHeight() * cam.getTransform().getScale().y();
 
-        Transform entityTransform = selectedFactory.getTransform();
+        Transform entityTransform = selectedFactory.getNewWorldTransform();
 
         //Y GREEN
 

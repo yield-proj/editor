@@ -16,9 +16,9 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -28,7 +28,7 @@ public class AddComponent implements ReturnNewObject<Component> {
     public Component returnNewObject() {
         AtomicReference<Component> component = new AtomicReference<>();
         try {
-            List<Class<?>> classes = getClassesForPackage("com.xebisco.yieldengine.core.components");
+            Set<Class<?>> classes = getClassesForPackage("com.xebisco.yieldengine.core.components");
             JDialog addDialog = new JDialog();
             addDialog.setModal(true);
             addDialog.setTitle("Add Component");
@@ -74,7 +74,7 @@ public class AddComponent implements ReturnNewObject<Component> {
     }
 
     private static void checkDirectory(File directory, String pckgname,
-                                       ArrayList<Class<?>> classes) throws ClassNotFoundException {
+                                       Set<Class<?>> classes) throws ClassNotFoundException {
         File tmpDirectory;
 
         if (directory.exists() && directory.isDirectory()) {
@@ -98,7 +98,7 @@ public class AddComponent implements ReturnNewObject<Component> {
     }
 
     private static void checkJarFile(JarURLConnection connection,
-                                     String pckgname, ArrayList<Class<?>> classes)
+                                     String pckgname, Set<Class<?>> classes)
             throws ClassNotFoundException, IOException {
         final JarFile jarFile = connection.getJarFile();
         final Enumeration<JarEntry> entries = jarFile.entries();
@@ -118,9 +118,9 @@ public class AddComponent implements ReturnNewObject<Component> {
         }
     }
 
-    public static ArrayList<Class<?>> getClassesForPackage(String pckgname)
+    public static Set<Class<?>> getClassesForPackage(String pckgname)
             throws ClassNotFoundException {
-        final ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+        final Set<Class<?>> classes = new HashSet<>();
 
         try {
             final ClassLoader cld = Thread.currentThread()

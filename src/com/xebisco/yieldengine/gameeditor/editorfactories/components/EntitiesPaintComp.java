@@ -8,6 +8,7 @@ import com.xebisco.yieldengine.core.camera.OrthoCamera;
 import com.xebisco.yieldengine.core.graphics.Graphics;
 import com.xebisco.yieldengine.core.graphics.IPainter;
 import com.xebisco.yieldengine.core.graphics.yldg1.Paint;
+import com.xebisco.yieldengine.gameeditor.EntityListEditor;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
 import com.xebisco.yieldengine.utils.ColorUtils;
 import org.joml.Vector3fc;
@@ -17,6 +18,29 @@ import java.util.List;
 
 public class EntitiesPaintComp extends Component implements IPainter {
     private List<Vector3fc> toDrawBalls = new ArrayList<>();
+    private EntityListEditor entityListEditor;
+
+    private void paintFactory(PreMadeEntityFactory f, Graphics g, OrthoCamera cam) {
+        Transform transform = new Transform(f.getNewWorldTransform());
+        Paint paint = new Paint();
+        paint.setCamera(cam);
+        for (EntityFactory factory : f.getChildren()) {
+            if (factory instanceof PreMadeEntityFactory f1) {
+                paintFactory(f1, g, cam);
+            }
+        }
+        for (Component c : f.getComponents()) {
+            if (c instanceof IPainter p) {
+                c.setWorldTransform(transform);
+                try {
+                    p.onPaint(g);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        toDrawBalls.add(transform.getTranslation());
+    }
 
     @Override
     public void onPaint(Graphics g) {
@@ -24,18 +48,9 @@ public class EntitiesPaintComp extends Component implements IPainter {
 
         OrthoCamera cam = (OrthoCamera) Global.getCurrentScene().getCamera();
 
-        for (EntityFactory factory : Global.getCurrentScene().getEntityFactories()) {
+        for (EntityFactory factory : entityListEditor.getScene().getEntityFactories()) {
             if (factory instanceof PreMadeEntityFactory f) {
-                Transform transform = new Transform(f.getNewWorldTransform());
-                Paint paint = new Paint();
-                paint.setCamera(cam);
-                for (Component c : f.getComponents()) {
-                    if (c instanceof IPainter p) {
-                        c.setWorldTransform(transform);
-                        p.onPaint(g);
-                    }
-                }
-                toDrawBalls.add(transform.getTranslation());
+                paintFactory(f, g, cam);
             }
         }
         Paint ballsPaint = new Paint();
@@ -45,5 +60,13 @@ public class EntitiesPaintComp extends Component implements IPainter {
             ballsPaint.getTransform().translate(ball);
             g.getG1().drawEllipse(8 * cam.getTransform().getScale().x(), 8 * cam.getTransform().getScale().y(), ballsPaint);
         }
+    }
+
+    public EntityListEditor getEntityListEditor() {
+        return entityListEditor;
+    }
+
+    public void setEntityListEditor(EntityListEditor entityListEditor) {
+        this.entityListEditor = entityListEditor;
     }
 }

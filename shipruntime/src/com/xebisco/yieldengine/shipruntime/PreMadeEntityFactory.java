@@ -5,13 +5,14 @@ import com.xebisco.yieldengine.utils.AltArray;
 import com.xebisco.yieldengine.utils.CustomAdd;
 import com.xebisco.yieldengine.utils.Editable;
 import com.xebisco.yieldengine.utils.Visible;
+import org.joml.Vector3f;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PreMadeEntityFactory implements EntityFactory, Serializable {
+public class PreMadeEntityFactory implements EntityFactory, Serializable, Cloneable, Comparable<EntityFactory> {
     @Visible
     @Editable
     private EntityHeader header = new EntityHeader("Entity Name");
@@ -24,8 +25,9 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
     @CustomAdd(addAction = "com.xebisco.yieldengine.gameeditor.AddComponent")
     private Component[] components = new Component[0];
 
-    private final List<EntityFactory> children = new ArrayList<>();
+    private List<EntityFactory> children = new ArrayList<>();
     private PreMadeEntityFactory parent;
+    private int preferredIndex;
 
     private transient Entity tempEntity;
 
@@ -33,21 +35,25 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
     public Entity createEntity() {
         Entity e = new Entity(header, transform);
         Collections.addAll(e.getComponents(), components);
-        for(EntityFactory child : children)
-            e.getChildren().add(child.createEntity());
+        for (EntityFactory child : children) {
+            child.createEntity().addToParent(e);
+        }
 
         return e;
     }
 
+    @Override
+    public String toString() {
+        return header.getName();
+    }
+
     public Transform getNewWorldTransform() {
-        if(parent == null) return transform;
-        Transform worldTransform = new Transform(parent.getNewWorldTransform());
-        worldTransform.getTransformMatrix().translationRotateScale(worldTransform.getTranslation(), worldTransform.getNormalizedRotation(),  worldTransform.getScale());
-        return worldTransform;
+        if (parent == null) return transform;
+        return new Transform(transform).apply(parent.getNewWorldTransform());
     }
 
     public Entity getTempEntity() {
-        if(tempEntity == null) tempEntity = createEntity();
+        if (tempEntity == null) tempEntity = createEntity();
         return tempEntity;
     }
 
@@ -94,5 +100,42 @@ public class PreMadeEntityFactory implements EntityFactory, Serializable {
 
     public List<EntityFactory> getChildren() {
         return children;
+    }
+
+    public void setChildren(List<EntityFactory> children) {
+        this.children = children;
+    }
+
+    @Override
+    public PreMadeEntityFactory clone() {
+        try {
+            PreMadeEntityFactory clone = (PreMadeEntityFactory) super.clone();
+            clone.setTransform(transform.clone());
+            clone.setHeader(header.clone());
+            clone.setComponents(components.clone());
+            clone.setChildren(new ArrayList<>());
+            for (EntityFactory f : children) {
+                if (f instanceof PreMadeEntityFactory f1)
+                    clone.getChildren().add(f1.clone());
+            }
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
+    @Override
+    public int compareTo(EntityFactory o) {
+        if (o instanceof PreMadeEntityFactory o1)
+            return Integer.compare(o1.preferredIndex, this.preferredIndex);
+        else return -1;
+    }
+
+    public int getPreferredIndex() {
+        return preferredIndex;
+    }
+
+    public void setPreferredIndex(int preferredIndex) {
+        this.preferredIndex = preferredIndex;
     }
 }

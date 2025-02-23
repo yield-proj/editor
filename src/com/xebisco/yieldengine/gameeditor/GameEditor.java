@@ -5,6 +5,7 @@ import com.xebisco.yieldengine.core.EntityFactory;
 import com.xebisco.yieldengine.core.Global;
 import com.xebisco.yieldengine.core.LoopContext;
 import com.xebisco.yieldengine.core.Scene;
+import com.xebisco.yieldengine.core.camera.OrthoCamera;
 import com.xebisco.yieldengine.gameeditor.editorfactories.CamControl;
 import com.xebisco.yieldengine.gameeditor.editorfactories.EntitiesPaint;
 import com.xebisco.yieldengine.gameeditor.editorfactories.Grid;
@@ -13,15 +14,13 @@ import com.xebisco.yieldengine.glimpl.window.OGLPanel;
 import com.xebisco.yieldengine.uilib.ProjectEditor;
 import com.xebisco.yieldengine.uilib.SettingsWindow;
 import com.xebisco.yieldengine.uilib.UIUtils;
+import com.xebisco.yieldengine.uilib.comm.CommandsDialog;
 import com.xebisco.yieldengine.uilib.projectmng.Project;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
@@ -51,6 +50,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
         frame.setJMenuBar(menuBar());
 
         frame.setMinimumSize(new Dimension(1280, 720));
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setLocationRelativeTo(null);
         frame.addMouseListener(new MouseAdapter() {
             @Override
@@ -90,8 +90,6 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         gameInspectorPane.setLeftComponent(contentPane);
 
-        Inspector.set(null);
-
         rightTabbedPane.addTab("Inspector", Inspector.INSPECTOR_PANEL);
 
         gameInspectorPane.setRightComponent(rightTabbedPane);
@@ -113,9 +111,13 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         frame.setVisible(true);
 
-        SwingUtilities.invokeLater(() -> {
-            gameInspectorPane.setDividerLocation(gameInspectorPane.getWidth() - 350);
-            gameInspectorPane.updateUI();
+        CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            Inspector.setGlobal(null, true);
         });
     }
 
@@ -135,20 +137,12 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
             CompletableFuture.runAsync(() -> {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(200);
                     LoopContext loopContext = Global.getOpenGLOpenALLCP1(deviceObject, new EditorPathGetter());
 
                     setScene(new Scene(new ArrayList<>()));
 
                     loopContext.startThread();
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        frame.getRootPane().updateUI();
-                    });
                 } catch (Throwable e) {
                     UIUtils.error(e, frame);
                     throw new RuntimeException(e);
@@ -224,13 +218,6 @@ public class GameEditor extends ProjectEditor<GameProject> {
         });
         fileMenu.add(settingsMenuItem);
 
-        fileMenu.addSeparator();
-
-        JMenuItem exitMenuItem = new JMenuItem("Exit");
-        exitMenuItem.setMnemonic('X');
-        exitMenuItem.addActionListener(_ -> frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING)));
-        fileMenu.add(exitMenuItem);
-
         menuBar.add(fileMenu);
 
         JMenu projectMenu = new JMenu("Project");
@@ -243,7 +230,14 @@ public class GameEditor extends ProjectEditor<GameProject> {
         });
         projectMenu.add(projectPropertiesItem);
 
-        menuBar.add(projectMenu);
+        fileMenu.add(projectMenu);
+
+        fileMenu.addSeparator();
+
+        JMenuItem exitMenuItem = new JMenuItem("Exit");
+        exitMenuItem.setMnemonic('X');
+        exitMenuItem.addActionListener(_ -> frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING)));
+        fileMenu.add(exitMenuItem);
 
         //END FILE
 
@@ -251,10 +245,60 @@ public class GameEditor extends ProjectEditor<GameProject> {
         editMenu.setMnemonic('E');
         menuBar.add(editMenu);
 
+        TransferActionListener actionListener = new TransferActionListener();
+
+        JMenuItem menuItem;
+
+        menuItem = new JMenuItem("Cut");
+        menuItem.setActionCommand((String)TransferHandler.getCutAction().
+                getValue(Action.NAME));
+        menuItem.addActionListener(actionListener);
+        menuItem.setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK));
+        menuItem.setMnemonic(KeyEvent.VK_T);
+        editMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Copy");
+        menuItem.setActionCommand((String)TransferHandler.getCopyAction().
+                getValue(Action.NAME));
+        menuItem.addActionListener(actionListener);
+        menuItem.setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        menuItem.setMnemonic(KeyEvent.VK_C);
+        editMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Paste");
+        menuItem.setActionCommand((String)TransferHandler.getPasteAction().
+                getValue(Action.NAME));
+        menuItem.addActionListener(actionListener);
+        menuItem.setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+        menuItem.setMnemonic(KeyEvent.VK_P);
+        editMenu.add(menuItem);
+
         JMenu viewMenu = new JMenu("View");
         viewMenu.setMnemonic('V');
+
+        JMenuItem openCommandsDialogItem = new JMenuItem(new AbstractAction("Open Commands Dialog...") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new CommandsDialog();
+            }
+        });
+        openCommandsDialogItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+
+        viewMenu.add(openCommandsDialogItem);
+
         menuBar.add(viewMenu);
 
+        JMenu navMenu = new JMenu("Navigate");
+        navMenu.setMnemonic('N');
+        menuBar.add(navMenu);
+
+        menuItem = new JMenuItem("Camera to object");
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
+        menuItem.addActionListener(_ -> ((OrthoCamera) entityListEditor.getSceneEditor().getCamera()).getTransform().position(Inspector.getEntity().getTransform().getTranslation()));
+        navMenu.add(menuItem);
 
         JMenu sceneMenu = new JMenu("Scene");
         sceneMenu.setMnemonic('S');

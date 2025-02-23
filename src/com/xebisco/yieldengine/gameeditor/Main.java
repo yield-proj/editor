@@ -1,5 +1,6 @@
 package com.xebisco.yieldengine.gameeditor;
 
+import com.xebisco.yieldengine.core.EntityFactory;
 import com.xebisco.yieldengine.core.EntityHeader;
 import com.xebisco.yieldengine.core.Transform;
 import com.xebisco.yieldengine.core.io.audio.Audio;
@@ -10,6 +11,7 @@ import com.xebisco.yieldengine.gameeditor.fields.FontField;
 import com.xebisco.yieldengine.gameeditor.fields.HeaderField;
 import com.xebisco.yieldengine.gameeditor.fields.TextureField;
 import com.xebisco.yieldengine.gameeditor.settings.Settings;
+import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
 import com.xebisco.yieldengine.uilib.SettingsWindow;
 import com.xebisco.yieldengine.uilib.UIUtils;
 import com.xebisco.yieldengine.uilib.fields.FileField;
@@ -19,6 +21,7 @@ import com.xebisco.yieldengine.utils.FileExtensions;
 import javax.swing.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Locale;
 
 public class Main {
@@ -42,6 +45,26 @@ public class Main {
             mng.setLocationRelativeTo(null);
             mng.setVisible(true);
         });
+    }
+
+    public static void processFactories(List<EntityFactory> factories) {
+        factories.sort((o1, o2) -> {
+            if(o1 instanceof PreMadeEntityFactory && o2 instanceof PreMadeEntityFactory) {
+                return ((PreMadeEntityFactory) o2).compareTo(o1);
+            }
+            return -1;
+        });
+    }
+
+    public static void setMappings(JComponent c) {
+        ActionMap map = c.getActionMap();
+        map.put(TransferHandler.getCutAction().getValue(Action.NAME),
+                TransferHandler.getCutAction());
+        map.put(TransferHandler.getCopyAction().getValue(Action.NAME),
+                TransferHandler.getCopyAction());
+        map.put(TransferHandler.getPasteAction().getValue(Action.NAME),
+                TransferHandler.getPasteAction());
+
     }
 
     private static File projectFolder;
