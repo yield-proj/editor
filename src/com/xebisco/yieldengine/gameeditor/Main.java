@@ -20,7 +20,9 @@ import com.xebisco.yieldengine.uilib.projectmng.ProjectMng;
 import com.xebisco.yieldengine.utils.FileExtensions;
 
 import javax.swing.*;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -55,6 +57,46 @@ public class Main {
         });
     }
 
+    public static Process executeBashCommand(String command) {
+        return executeBashCommand(command, true);
+    }
+
+    public static Process executeBashCommand(String command, boolean printError) {
+        System.out.println("Executing BASH command:\n   " + command);
+        Runtime r = Runtime.getRuntime();
+        // Use bash -c so we can handle things like multi commands separated by ; and
+        // things like quotes, $, |, and \. My tests show that command comes as
+        // one argument to bash, so we do not need to quote it to make it one thing.
+        // Also, exec may object if it does not have an executable file as the first thing,
+        // so having bash here makes it happy provided bash is installed and in path.
+        String[] commands = {"bash", "-c", command};
+        try {
+            Process p = r.exec(commands);
+
+            p.waitFor();
+            BufferedReader b = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+
+            while ((line = b.readLine()) != null) {
+                System.out.println(line);
+            }
+            b.close();
+
+            if (printError) {
+                b = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+                while ((line = b.readLine()) != null) {
+                    System.out.println(line);
+                }
+                b.close();
+            }
+            return p;
+        } catch (Exception e) {
+            System.err.println("Failed to execute bash with command: " + command);
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void aa(AppAction action) {
         while (APP_ACTIONS.size() > undoIndex + 1) {
             APP_ACTIONS.removeLast();
@@ -65,7 +107,7 @@ public class Main {
     }
 
     public static void undo() {
-        if(!canUndo()) throw new IllegalStateException("Can't undo");
+        if (!canUndo()) throw new IllegalStateException("Can't undo");
         APP_ACTIONS.get(undoIndex--).redo().run();
     }
 
@@ -74,7 +116,7 @@ public class Main {
     }
 
     public static void redo() {
-        if(!canRedo()) throw new IllegalStateException("Can't redo");
+        if (!canRedo()) throw new IllegalStateException("Can't redo");
         APP_ACTIONS.get(++undoIndex).action().run();
     }
 
@@ -84,7 +126,7 @@ public class Main {
 
     public static void processFactories(List<EntityFactory> factories) {
         factories.sort((o1, o2) -> {
-            if(o1 instanceof PreMadeEntityFactory && o2 instanceof PreMadeEntityFactory) {
+            if (o1 instanceof PreMadeEntityFactory && o2 instanceof PreMadeEntityFactory) {
                 return ((PreMadeEntityFactory) o2).compareTo(o1);
             }
             return -1;
@@ -115,11 +157,31 @@ public class Main {
     public static File getAssetsFolder() {
         File assetsFolder = new File(getProjectFolder(), "assets");
         if (!assetsFolder.isDirectory()) {
-            if(!assetsFolder.mkdir()) {
+            if (!assetsFolder.mkdir()) {
                 UIUtils.error(new IllegalStateException("Could not create assets folder"));
             }
         }
         return assetsFolder;
+    }
+
+    public static File getScriptsFolder() {
+        File scripsFolder = new File(getProjectFolder(), "scripts");
+        if (!scripsFolder.isDirectory()) {
+            if (!scripsFolder.mkdir()) {
+                UIUtils.error(new IllegalStateException("Could not create scripts folder"));
+            }
+        }
+        return scripsFolder;
+    }
+
+    public static File getBuildFolder() {
+        File buildFolder = new File(getProjectFolder(), "build");
+        if (!buildFolder.isDirectory()) {
+            if (!buildFolder.mkdir()) {
+                UIUtils.error(new IllegalStateException("Could not create build folder"));
+            }
+        }
+        return buildFolder;
     }
 
     public static File getAsset(String name) {

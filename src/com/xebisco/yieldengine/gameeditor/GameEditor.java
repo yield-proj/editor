@@ -20,9 +20,12 @@ import com.xebisco.yieldengine.uilib.projectmng.Project;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.JButton;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -37,6 +40,38 @@ public class GameEditor extends ProjectEditor<GameProject> {
     private final JFrame frame;
     private final JSplitPane gameInspectorPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     private final FlatTabbedPane rightTabbedPane = new FlatTabbedPane();
+    private final AbstractAction[] basicBuildActions = new AbstractAction[]{
+            new AbstractAction("Run Scene") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    buildProject();
+                }
+            },
+            new AbstractAction("Run Global") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    buildProject();
+                }
+            },
+            new AbstractAction("Build") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    buildProject();
+                }
+            },
+            new AbstractAction("Pause") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                }
+            },
+            new AbstractAction("Cancel") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                }
+            }
+    };
 
     public GameEditor(Project project) {
         super(project);
@@ -49,6 +84,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
         }
 
         frame.setJMenuBar(menuBar());
+        frame.add(applicationBar(), BorderLayout.NORTH);
 
         frame.setMinimumSize(new Dimension(1280, 720));
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -102,6 +138,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         //SETUP project
         Main.getAssetsFolder();
+        Main.getScriptsFolder();
 
         try {
             Files.copy(Objects.requireNonNull(GameEditor.class.getResourceAsStream("/OpenSans-Regular.ttf")), Main.getAsset("OpenSans-Regular.ttf").toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -120,6 +157,25 @@ public class GameEditor extends ProjectEditor<GameProject> {
             }
             Inspector.setGlobal(null, true);
         });
+    }
+
+    public void buildProject() {
+        Process p = Main.executeBashCommand("find " + Main.getScriptsFolder() + " -name '*.java' | xargs javac -d " + Main.getBuildFolder(), false);
+
+        try {
+            StringBuilder err = new StringBuilder();
+            BufferedReader b = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            String line;
+
+            while ((line = b.readLine()) != null) {
+                err.append(line).append("\n");
+            }
+            if (!err.isEmpty())
+                UIUtils.error(new RuntimeException(err.toString()), frame.getRootPane());
+        } catch (Exception e) {
+            UIUtils.error(e, frame.getRootPane());
+        }
+
     }
 
     private void setProjectFolder() {
@@ -191,6 +247,22 @@ public class GameEditor extends ProjectEditor<GameProject> {
         } catch (IOException e) {
             UIUtils.error(e, frame);
         }
+    }
+
+    private JToolBar applicationBar() {
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+
+        toolBar.add(Box.createHorizontalGlue());
+
+        for (AbstractAction action : basicBuildActions) {
+            JButton button = new JButton(action);
+            toolBar.add(button);
+        }
+
+        toolBar.add(Box.createHorizontalGlue());
+
+        return toolBar;
     }
 
     private JMenuBar menuBar() {
@@ -327,9 +399,16 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         //END SCENE
 
-        JMenu buildMenu = new JMenu("Build");
-        buildMenu.setMnemonic('B');
+        JMenu buildMenu = new JMenu("Application");
+        buildMenu.setMnemonic('A');
         menuBar.add(buildMenu);
+
+        for (AbstractAction action : basicBuildActions) {
+            JMenuItem item = new JMenuItem(action);
+            buildMenu.add(item);
+        }
+
+        buildMenu.addSeparator();
 
         JMenu gitMenu = new JMenu("Git");
         gitMenu.setMnemonic('G');
