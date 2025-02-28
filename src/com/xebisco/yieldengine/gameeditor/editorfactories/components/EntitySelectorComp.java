@@ -11,18 +11,24 @@ import com.xebisco.yieldengine.core.io.IO;
 import com.xebisco.yieldengine.core.io.texture.Texture;
 import com.xebisco.yieldengine.gameeditor.EntityListEditor;
 import com.xebisco.yieldengine.gameeditor.Inspector;
+import com.xebisco.yieldengine.gameeditor.Main;
 import com.xebisco.yieldengine.gameeditor.editorfactories.MousePosition;
 import com.xebisco.yieldengine.gameeditor.settings.Settings;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
 import com.xebisco.yieldengine.utils.ColorPalette;
+import com.xebisco.yieldengine.utils.concurrency.ASyncFunction;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class EntitySelectorComp extends Component implements IPainter {
     private EntityListEditor entityListEditor;
     public static PreMadeEntityFactory selectedFactory;
 
-    private boolean rightClickLock, leftClickLock, blockSelection, xSel, ySel, movX, movY;
+    private boolean rightClickLock, leftClickLock, blockSelection, xSel, ySel, movX, movY, canSelect;
     private float clickX, clickY;
+    private Vector2f startPos = new Vector2f();
 
     private Texture arrowTexture = IO.getInstance().loadTexture("editoruires/arrow.png");
 
@@ -59,11 +65,15 @@ public class EntitySelectorComp extends Component implements IPainter {
             if (!leftClickLock) {
                 leftClickLock = true;
                 if (!blockSelection) {
+                    canSelect = false;
                     selectedFactory = null;
                     PreMadeEntityFactory fac = getFac(cam);
                     if (fac != null) {
                         Inspector.setGlobal(fac, true);
                     }
+                }
+                if(selectedFactory != null) {
+                    startPos = new Vector2f(selectedFactory.getTransform().getTranslation());
                 }
                 clickX = MousePosition.X;
                 clickY = MousePosition.Y;
@@ -73,6 +83,26 @@ public class EntitySelectorComp extends Component implements IPainter {
                 }
             }
         } else {
+            if (leftClickLock) {
+                if (selectedFactory != null && canSelect) {
+                    PreMadeEntityFactory sf = selectedFactory;
+                    Vector2f pos = new Vector2f(sf.getTransform().getTranslation()), sp = new Vector2f(startPos);
+                    Main.aa(new Main.AppAction(
+                            "Move Entity",
+                            () -> {
+                                Inspector.setMovingEntity(true);
+                                sf.getTransform().position(pos);
+                                ASyncFunction.aSync(() -> Inspector.setMovingEntity(false), ASyncFunction.NONE, 500);
+                            },
+                            () -> {
+                                Inspector.setMovingEntity(true);
+                                sf.getTransform().position(sp);
+                                ASyncFunction.aSync(() -> Inspector.setMovingEntity(false), ASyncFunction.NONE, 500);
+                            }
+                    ));
+                }
+            }
+            canSelect = true;
             movX = false;
             movY = false;
             leftClickLock = false;
@@ -103,7 +133,7 @@ public class EntitySelectorComp extends Component implements IPainter {
             }
         }
 
-        if (movX && selectedFactory != null) {
+        if (movX && selectedFactory != null && canSelect) {
             if (MousePosition.lockToGrid) {
                 selectedFactory.getTransform().translate(MousePosition.GX - selectedFactory.getNewWorldTransform().getTranslation().x(), 0);
             } else {
@@ -119,7 +149,7 @@ public class EntitySelectorComp extends Component implements IPainter {
             }
         }
 
-        if (movY && selectedFactory != null) {
+        if (movY && selectedFactory != null && canSelect) {
             if (MousePosition.lockToGrid) {
                 selectedFactory.getTransform().translate(0, MousePosition.GY - selectedFactory.getNewWorldTransform().getTranslation().y());
             } else {

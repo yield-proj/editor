@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="yield-core">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../YieldEngine/out/artifacts/core_jar/yield-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../YieldEngine/out/artifacts/alimpl_jar/yield-alimpl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../YieldEngine/out/artifacts/glimpl_jar/yield-glimpl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../YieldEngine/out/artifacts/utils_jar/yield-utils.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

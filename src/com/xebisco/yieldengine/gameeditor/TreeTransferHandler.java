@@ -8,68 +8,29 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-class TreeTransferHandler extends TransferHandler {
+public class TreeTransferHandler extends TransferHandler {
     DataFlavor nodesFlavor;
     DataFlavor[] flavors = new DataFlavor[1];
     DefaultMutableTreeNode[] nodesToRemove;
+    int lastAction;
 
     public TreeTransferHandler() {
         try {
-            String mimeType = DataFlavor.javaJVMLocalObjectMimeType +
-                    ";class=\"" +
-                    javax.swing.tree.DefaultMutableTreeNode[].class.getName() +
-                    "\"";
+            String mimeType = DataFlavor.javaJVMLocalObjectMimeType + ";class=\"" +
+                    DefaultMutableTreeNode[].class.getName() + "\"";
             nodesFlavor = new DataFlavor(mimeType);
             flavors[0] = nodesFlavor;
         } catch (ClassNotFoundException e) {
             System.out.println("ClassNotFound: " + e.getMessage());
         }
-    }
-
-    public boolean canImport(TransferHandler.TransferSupport support) {
-        if (!support.isDrop()) {
-            return false;
-        }
-        support.setShowDropLocation(true);
-        if (!support.isDataFlavorSupported(nodesFlavor)) {
-            return false;
-        }
-        // Do not allow a drop on the drag source selections.
-        JTree.DropLocation dl =
-                (JTree.DropLocation) support.getDropLocation();
-        JTree tree = (JTree) support.getComponent();
-        int dropRow = tree.getRowForPath(dl.getPath());
-        int[] selRows = tree.getSelectionRows();
-        for (int i = 0; i < selRows.length; i++) {
-            if (selRows[i] == dropRow) {
-                return false;
-            }
-        }
-        // Do not allow MOVE-action drops if a non-leaf node is
-        // selected unless all of its children are also selected.
-        int action = support.getDropAction();
-        if (action == MOVE) {
-            return haveCompleteNode(tree);
-        }
-        // Do not allow a non-leaf node to be copied to a level
-        // which is less than its source level.
-        TreePath dest = dl.getPath();
-        DefaultMutableTreeNode target =
-                (DefaultMutableTreeNode) dest.getLastPathComponent();
-        TreePath path = tree.getPathForRow(selRows[0]);
-        DefaultMutableTreeNode firstNode =
-                (DefaultMutableTreeNode) path.getLastPathComponent();
-        if (firstNode.getChildCount() > 0 &&
-                target.getLevel() < firstNode.getLevel()) {
-            return false;
-        }
-        return true;
     }
 
     private boolean haveCompleteNode(JTree tree) {
@@ -97,17 +58,33 @@ class TreeTransferHandler extends TransferHandler {
         return true;
     }
 
+    //TransferHandler
+    @Override
+    public int getSourceActions(JComponent c) {
+        return TransferHandler.COPY_OR_MOVE;
+    }
+
+    //TransferHandler
+    @Override
+    public boolean canImport(JComponent comp, DataFlavor flavor[]) {
+        for (int i = 0, n = flavor.length; i < n; i++) {
+            for (int j = 0, m = flavors.length; j < m; j++) {
+                if (flavor[i].equals(flavors[j])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    //TransferHandler
+    @Override
     protected Transferable createTransferable(JComponent c) {
         JTree tree = (JTree) c;
         TreePath[] paths = tree.getSelectionPaths();
         if (paths != null) {
-            // Make up a node array of copies for transfer and
-            // another for/of the nodes that will be removed in
-            // exportDone after a successful drop.
-            List<DefaultMutableTreeNode> copies =
-                    new ArrayList<DefaultMutableTreeNode>();
-            List<DefaultMutableTreeNode> toRemove =
-                    new ArrayList<DefaultMutableTreeNode>();
+            List<DefaultMutableTreeNode> copies = new ArrayList<>();
+            List<DefaultMutableTreeNode> toRemove = new ArrayList<>();
             DefaultMutableTreeNode node =
                     (DefaultMutableTreeNode) paths[0].getLastPathComponent();
             DefaultMutableTreeNode copy = copy(node);
@@ -140,10 +117,41 @@ class TreeTransferHandler extends TransferHandler {
      * Defensive copy used in createTransferable.
      */
     private DefaultMutableTreeNode copy(TreeNode node) {
-        return new DefaultMutableTreeNode(node);
+        Object o = (((DefaultMutableTreeNode) node).getUserObject());
+        if (o instanceof PreMadeEntityFactory f)
+            o = f.clone();
+        return new DefaultMutableTreeNode(o);
     }
 
-    protected void exportDone(JComponent source, Transferable data, int action) {
+    @Override
+    public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
+        super.exportToClipboard(comp, clip, action);
+        lastAction = action;
+    }
+
+    @Override
+    public void exportAsDrag(JComponent comp, InputEvent e, int action) {
+        super.exportAsDrag(comp, e, action);
+        lastAction = action;
+    }
+
+    private void updateScene(EntityListEditor.EntityTree et, DefaultMutableTreeNode root) {
+        et.getScene().getEntityFactories().clear();
+
+        int index = 0;
+        for (int i = 0; i < root.getChildCount(); i++) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) root.getChildAt(i);
+            EntityFactory fac2 = (EntityFactory) node.getUserObject();
+            if (fac2 instanceof PreMadeEntityFactory f2) {
+                resetA(node, f2);
+                f2.setPreferredIndex(index++);
+                f2.setParent(null);
+            }
+            et.getScene().getEntityFactories().add(fac2);
+        }
+    }
+
+    protected void exportDone2(JComponent source, int action) {
         if ((action & MOVE) == MOVE) {
             JTree tree = (JTree) source;
             DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
@@ -153,52 +161,60 @@ class TreeTransferHandler extends TransferHandler {
             }
         }
         if (source instanceof EntityListEditor.EntityTree et) {
-            et.getScene().getEntityFactories().clear();
+            DefaultTreeModel model = (DefaultTreeModel) et.getModel();
+            DefaultMutableTreeNode cloned1 = cloned;
+            DefaultMutableTreeNode cloned2 = (DefaultMutableTreeNode) model.getRoot();
+            Main.aa(new Main.AppAction(
+                    "Tree Update",
+                    () -> {
+                        updateScene(et, (DefaultMutableTreeNode) cloned2.getRoot());
+                        et.reset();
+                        Inspector.set(null);
 
-            for (int i = 0; i < et.getModel().getChildCount(et.getModel().getRoot()); i++) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) et.getModel().getChild(et.getModel().getRoot(), i);
-                Object fac2 = node;
-                do {
-                    assert fac2 != null;
-                    fac2 = (((DefaultMutableTreeNode) fac2).getUserObject());
-                } while (fac2 instanceof DefaultMutableTreeNode);
-                if (fac2 instanceof PreMadeEntityFactory f2) {
-                    resetA(node, f2);
-                    f2.setParent(null);
-                }
-                et.getScene().getEntityFactories().add((EntityFactory) fac2);
-            }
-
-            et.reset();
+                    },
+                    () -> {
+                        updateScene(et, (DefaultMutableTreeNode) cloned1.getRoot());
+                        et.reset();
+                        Inspector.set(null);
+                    }
+            ));
         }
     }
+
 
     public void resetA(DefaultMutableTreeNode root, PreMadeEntityFactory factory) {
         factory.setParent(null);
         factory.getChildren().clear();
+        int index = 0;
         for (int i = 0; i < root.getChildCount(); i++) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) root.getChildAt(i);
-            Object fac2 = node;
-            do {
-                assert fac2 != null;
-                fac2 = (((DefaultMutableTreeNode) fac2).getUserObject());
-            } while (fac2 instanceof DefaultMutableTreeNode);
+            EntityFactory fac2 = (EntityFactory) node.getUserObject();
             if (fac2 instanceof PreMadeEntityFactory f2) {
                 resetA(node, f2);
+                f2.setPreferredIndex(index++);
                 f2.setParent(factory);
             }
             factory.getChildren().add((EntityFactory) fac2);
         }
     }
 
-    public int getSourceActions(JComponent c) {
-        return COPY_OR_MOVE;
+    public DefaultMutableTreeNode cloneNode(DefaultMutableTreeNode node) {
+        DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(node.getUserObject());
+        for (int iChildren = node.getChildCount(), i = 0; i < iChildren; i++) {
+            newNode.add(cloneNode((DefaultMutableTreeNode) node.getChildAt(i)));
+        }
+        return newNode;
     }
 
+    private DefaultMutableTreeNode cloned;
+
+    //TransferHandler
+    @Override
     public boolean importData(TransferHandler.TransferSupport support) {
         if (!canImport(support)) {
             return false;
         }
+
         // Extract transfer data.
         DefaultMutableTreeNode[] nodes = null;
         try {
@@ -210,13 +226,21 @@ class TreeTransferHandler extends TransferHandler {
             System.out.println("I/O error: " + ioe.getMessage());
         }
         // Get drop location info.
-        JTree.DropLocation dl =
-                (JTree.DropLocation) support.getDropLocation();
-        int childIndex = dl.getChildIndex();
-        TreePath dest = dl.getPath();
-        DefaultMutableTreeNode parent =
-                (DefaultMutableTreeNode) dest.getLastPathComponent();
+        int childIndex;
+        TreePath dest;
+        if (support.isDrop()) {
+            JTree.DropLocation dl = (JTree.DropLocation) support.getDropLocation();
+            childIndex = dl.getChildIndex();
+            dest = dl.getPath();
+        } else {
+            childIndex = -1;
+            JTree tree = (JTree) support.getComponent();
+            dest = tree.getSelectionPath();
+        }
+        DefaultMutableTreeNode parent
+                = (DefaultMutableTreeNode) dest.getLastPathComponent();
         JTree tree = (JTree) support.getComponent();
+        cloned = cloneNode((DefaultMutableTreeNode) tree.getModel().getRoot());
         DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
         // Configure for drop mode.
         int index = childIndex;    // DropMode.INSERT
@@ -225,13 +249,17 @@ class TreeTransferHandler extends TransferHandler {
         }
         // Add data to model.
         for (int i = 0; i < nodes.length; i++) {
+            // ArrayIndexOutOfBoundsException
             model.insertNodeInto(nodes[i], parent, index++);
         }
+        exportDone2(tree, lastAction);
         return true;
     }
 
-    public String toString() {
-        return getClass().getName();
+    //TransferHandler
+    @Override
+    public boolean importData(JComponent comp, Transferable t) {
+        return importData(new TransferHandler.TransferSupport(comp, t));
     }
 
     public class NodesTransferable implements Transferable {
@@ -241,19 +269,25 @@ class TreeTransferHandler extends TransferHandler {
             this.nodes = nodes;
         }
 
-        public Object getTransferData(DataFlavor flavor)
-                throws UnsupportedFlavorException {
-            if (!isDataFlavorSupported(flavor))
-                throw new UnsupportedFlavorException(flavor);
+        //Transferable
+        @Override
+        public Object getTransferData(DataFlavor flavor) {
+            if (!isDataFlavorSupported(flavor)) {
+                return false;
+            }
             return nodes;
         }
 
+        //Transferable
+        @Override
         public DataFlavor[] getTransferDataFlavors() {
             return flavors;
         }
 
+        //Transferable
+        @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
-            return nodesFlavor.equals(flavor);
+            return flavor.equals(nodesFlavor);
         }
     }
 }

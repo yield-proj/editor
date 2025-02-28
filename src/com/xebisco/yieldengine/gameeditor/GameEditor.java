@@ -10,6 +10,7 @@ import com.xebisco.yieldengine.gameeditor.editorfactories.CamControl;
 import com.xebisco.yieldengine.gameeditor.editorfactories.EntitiesPaint;
 import com.xebisco.yieldengine.gameeditor.editorfactories.Grid;
 import com.xebisco.yieldengine.gameeditor.editorfactories.Selector;
+import com.xebisco.yieldengine.gameeditor.settings.Settings;
 import com.xebisco.yieldengine.glimpl.window.OGLPanel;
 import com.xebisco.yieldengine.uilib.ProjectEditor;
 import com.xebisco.yieldengine.uilib.SettingsWindow;
@@ -206,7 +207,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         JMenuItem saveProjectItem = new JMenuItem("Save");
         saveProjectItem.setMnemonic('S');
-        saveProjectItem.setAccelerator(KeyStroke.getKeyStroke("control S"));
+        saveProjectItem.setAccelerator(Settings.getInstance().KEY_STROKE_SETTINGS.getKeyStroke("Save").getStroke());
         saveProjectItem.addActionListener(_ -> saveProject());
 
         fileMenu.add(saveProjectItem);
@@ -241,38 +242,51 @@ public class GameEditor extends ProjectEditor<GameProject> {
 
         //END FILE
 
+        JMenuItem menuItem;
+
         JMenu editMenu = new JMenu("Edit");
         editMenu.setMnemonic('E');
         menuBar.add(editMenu);
 
+        menuItem = new JMenuItem("Undo");
+        menuItem.setMnemonic('U');
+        menuItem.setAccelerator(Settings.getInstance().KEY_STROKE_SETTINGS.getKeyStroke("Undo").getStroke());
+        menuItem.addActionListener(_ -> Main.undo());
+
+        editMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Redo");
+        menuItem.setMnemonic('R');
+        menuItem.setAccelerator(Settings.getInstance().KEY_STROKE_SETTINGS.getKeyStroke("Redo").getStroke());
+        menuItem.addActionListener(_ -> Main.redo());
+
+        editMenu.add(menuItem);
+
+        editMenu.addSeparator();
+
         TransferActionListener actionListener = new TransferActionListener();
 
-        JMenuItem menuItem;
-
         menuItem = new JMenuItem("Cut");
-        menuItem.setActionCommand((String)TransferHandler.getCutAction().
+        menuItem.setActionCommand((String) TransferHandler.getCutAction().
                 getValue(Action.NAME));
         menuItem.addActionListener(actionListener);
-        menuItem.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK));
+        menuItem.setAccelerator(Settings.getInstance().KEY_STROKE_SETTINGS.getKeyStroke("Cut").getStroke());
         menuItem.setMnemonic(KeyEvent.VK_T);
         editMenu.add(menuItem);
 
         menuItem = new JMenuItem("Copy");
-        menuItem.setActionCommand((String)TransferHandler.getCopyAction().
+        menuItem.setActionCommand((String) TransferHandler.getCopyAction().
                 getValue(Action.NAME));
         menuItem.addActionListener(actionListener);
-        menuItem.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        menuItem.setAccelerator(Settings.getInstance().KEY_STROKE_SETTINGS.getKeyStroke("Copy").getStroke());
         menuItem.setMnemonic(KeyEvent.VK_C);
         editMenu.add(menuItem);
 
         menuItem = new JMenuItem("Paste");
-        menuItem.setActionCommand((String)TransferHandler.getPasteAction().
+        menuItem.setActionCommand((String) TransferHandler.getPasteAction().
                 getValue(Action.NAME));
         menuItem.addActionListener(actionListener);
-        menuItem.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+        menuItem.setAccelerator(Settings.getInstance().KEY_STROKE_SETTINGS.getKeyStroke("Paste").getStroke());
         menuItem.setMnemonic(KeyEvent.VK_P);
         editMenu.add(menuItem);
 

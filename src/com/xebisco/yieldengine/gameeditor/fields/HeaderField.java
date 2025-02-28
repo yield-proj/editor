@@ -48,7 +48,7 @@ public class HeaderField extends EditableField {
 
     @Override
     public EntityHeader getValue() {
-        header.setName(nameField.getValue());
+        header.setName((String) nameField.getValue());
         header.setTags(tagField.getValue());
         header.setLayer(layerField.getValue());
         header.setEnabled(enabledField.getValue());

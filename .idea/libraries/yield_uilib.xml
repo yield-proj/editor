@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="yield-uilib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../YieldUILib/out/artifacts/YieldUILib_jar/YieldUILib.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -12,6 +12,8 @@ import com.xebisco.yieldengine.gameeditor.editorfactories.components.EntitiesPai
 import com.xebisco.yieldengine.gameeditor.editorfactories.components.EntitySelectorComp;
 import com.xebisco.yieldengine.glimpl.window.OGLPanel;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -196,12 +198,24 @@ public class EntityListEditor extends JPanel {
         if (parent != null) {
             deleteMenu.setEnabled(true);
             deleteMenu.addActionListener(_ -> {
-                if (parent.getParent() != null) {
-                    parent.getParent().getChildren().remove(parent);
-                } else {
-                    scene.getEntityFactories().remove(parent);
-                }
-                if (Inspector.getEntity() == parent) Inspector.setGlobal(null, true);
+                Main.aa(new Main.AppAction(
+                        "Remove Entity",
+                        () -> {
+                            if (parent.getParent() != null) {
+                                parent.getParent().getChildren().remove(parent);
+                            } else {
+                                scene.getEntityFactories().remove(parent);
+                            }
+                            if (Inspector.getEntity() == parent) Inspector.setGlobal(null, true);
+                        },
+                        () -> {
+                            if (parent.getParent() != null) {
+                                parent.getParent().getChildren().add(parent);
+                            } else {
+                                scene.getEntityFactories().add(parent);
+                            }
+                        }
+                ));
                 resetTree();
             });
         }
@@ -214,17 +228,20 @@ public class EntityListEditor extends JPanel {
         PreMadeEntityFactory factory = new PreMadeEntityFactory();
         factory.setParent(parent);
         factory.getTransform().translate(mx, my);
+        Vector3f startPos = new Vector3f(factory.getTransform().getTranslation());
         factory.setComponents(components);
         factory.setPreferredIndex(factories.size());
-        factories.add(factory);
-        resetTree();
-    }
-
-    private void addEntity(List<EntityFactory> factories, PreMadeEntityFactory parent, PreMadeEntityFactory factory) {
-        factory.setParent(parent);
-        factory.setPreferredIndex(factories.size());
-        factories.add(factory);
-        resetTree();
+        Main.aa(new Main.AppAction(
+                "Add Entity", () -> {
+            factories.add(factory);
+            factory.getTransform().position(startPos);
+            resetTree();
+        }, () -> {
+            factories.remove(factory);
+            Inspector.setGlobal(null, true);
+            resetTree();
+        }
+        ));
     }
 
     private void updateValues() {
@@ -346,9 +363,9 @@ public class EntityListEditor extends JPanel {
             }
             entityTree.setTransferHandler(new TreeTransferHandler());
             entityTree.setDragEnabled(true);
-            entityTree.setDropMode(DropMode.ON);
+            entityTree.setDropMode(DropMode.ON_OR_INSERT);
 
-            Main.setMappings(entityTree);
+            //Main.setMappings(entityTree);
 
             created = true;
         }

@@ -17,56 +17,17 @@ public class Settings extends BasicSettings {
     private static final long serialVersionUID = 3758102755696519996L;
 
     //EDITOR SETTINGS
-    public final EntitySelector ENTITY_SELECTOR = new EntitySelector();
-    public final CameraSettings CAMERA_SETTINGS = new CameraSettings();
+    public EntitySelector ENTITY_SELECTOR;
+    public CameraSettings CAMERA_SETTINGS;
+    public KeyStrokeSettings KEY_STROKE_SETTINGS;
 
     @Override
     protected Pair<ArrayList<Runnable>, ArrayList<DefaultMutableTreeNode>> tabs() {
         Pair<ArrayList<Runnable>, ArrayList<DefaultMutableTreeNode>> tabs =  super.tabs();
 
-        //EDITOR SETTINGS
-        Pair<Runnable, DefaultMutableTreeNode> editorSettingsTab = editorSettingsTab();
-        UIUtils.depthPanel(editorSettingsTab.second(), "Editor Settings");
-
-        tabs.second().add(editorSettingsTab.second());
-        tabs.first().add(editorSettingsTab.first());
-
-
+        addSection(tabs, "Editor Settings", ENTITY_SELECTOR, CAMERA_SETTINGS, KEY_STROKE_SETTINGS);
 
         return tabs;
-    }
-
-
-    protected Pair<Runnable, DefaultMutableTreeNode> entitySelectorTab() {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setName("Entity Selector");
-        Pair<Runnable, JPanel> v = UIUtils.getObjectsFieldsPanel(new Object[]{ENTITY_SELECTOR});
-        p.add(v.second());
-        return new Pair<>(v.first(), new DefaultMutableTreeNode(p));
-    }
-
-    protected Pair<Runnable, DefaultMutableTreeNode> cameraSettingsTab() {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setName("Camera Settings");
-        Pair<Runnable, JPanel> v = UIUtils.getObjectsFieldsPanel(new Object[]{CAMERA_SETTINGS});
-        p.add(v.second());
-        return new Pair<>(v.first(), new DefaultMutableTreeNode(p));
-    }
-
-    protected Pair<Runnable, DefaultMutableTreeNode> editorSettingsTab() {
-        DefaultMutableTreeNode editorSettings = new DefaultMutableTreeNode();
-
-        List<Runnable> applyList = new ArrayList<>();
-
-        Pair<Runnable, DefaultMutableTreeNode> entitySelectorTab = entitySelectorTab();
-        editorSettings.add(entitySelectorTab.second());
-        applyList.add(entitySelectorTab.first());
-
-        Pair<Runnable, DefaultMutableTreeNode> cameraSettingsTab = cameraSettingsTab();
-        editorSettings.add(cameraSettingsTab.second());
-        applyList.add(cameraSettingsTab.first());
-
-        return new Pair<>(() -> applyList.forEach(Runnable::run), editorSettings);
     }
 
     public static Settings getInstance() {

@@ -10,6 +10,7 @@ import com.xebisco.yieldengine.gameeditor.fields.AudioField;
 import com.xebisco.yieldengine.gameeditor.fields.FontField;
 import com.xebisco.yieldengine.gameeditor.fields.HeaderField;
 import com.xebisco.yieldengine.gameeditor.fields.TextureField;
+import com.xebisco.yieldengine.gameeditor.settings.KeyStrokeSettings;
 import com.xebisco.yieldengine.gameeditor.settings.Settings;
 import com.xebisco.yieldengine.shipruntime.PreMadeEntityFactory;
 import com.xebisco.yieldengine.uilib.SettingsWindow;
@@ -21,13 +22,20 @@ import com.xebisco.yieldengine.utils.FileExtensions;
 import javax.swing.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class Main {
+    public static final ArrayList<AppAction> APP_ACTIONS = new ArrayList<>();
+    private static int undoIndex = -1;
+
+    public record AppAction(String name, Runnable action, Runnable redo) {
+    }
+
     public static void main(String[] args) throws InterruptedException, InvocationTargetException {
         Locale.setDefault(Locale.US);
         UIUtils.setupLaf();
+
+        UIUtils.RETURN_FIELD_MAP.put(KeyStrokeSettings.KStroke.class, (_, value, editable, _) -> new KStrokeField(((KeyStrokeSettings.KStroke) value), editable));
 
         UIUtils.RETURN_FIELD_MAP.put(Transform.class, (name, value, editable, _) -> new TransformField(name, (Transform) value, editable));
 
@@ -45,6 +53,33 @@ public class Main {
             mng.setLocationRelativeTo(null);
             mng.setVisible(true);
         });
+    }
+
+    public static void aa(AppAction action) {
+        while (APP_ACTIONS.size() > undoIndex + 1) {
+            APP_ACTIONS.removeLast();
+        }
+        undoIndex++;
+        APP_ACTIONS.add(action);
+        action.action().run();
+    }
+
+    public static void undo() {
+        if(!canUndo()) throw new IllegalStateException("Can't undo");
+        APP_ACTIONS.get(undoIndex--).redo().run();
+    }
+
+    public static boolean canUndo() {
+        return undoIndex >= 0;
+    }
+
+    public static void redo() {
+        if(!canRedo()) throw new IllegalStateException("Can't redo");
+        APP_ACTIONS.get(++undoIndex).action().run();
+    }
+
+    public static boolean canRedo() {
+        return undoIndex < APP_ACTIONS.size() - 1;
     }
 
     public static void processFactories(List<EntityFactory> factories) {
