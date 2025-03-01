@@ -20,10 +20,9 @@ import com.xebisco.yieldengine.uilib.projectmng.ProjectMng;
 import com.xebisco.yieldengine.utils.FileExtensions;
 
 import javax.swing.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.util.*;
 
 public class Main {
@@ -172,6 +171,35 @@ public class Main {
             }
         }
         return scripsFolder;
+    }
+
+    public static void copyEngineLibs() {
+        File libsFolder = getLibsFolder();
+        try {
+            checkAndCopyJar("yield-core.jar", Main.class.getResourceAsStream("/engine/yield-core.jar"), libsFolder);
+            checkAndCopyJar("yield-glimpl.jar", Main.class.getResourceAsStream("/engine/yield-glimpl.jar"), libsFolder);
+            checkAndCopyJar("yield-alimpl.jar", Main.class.getResourceAsStream("/engine/yield-alimpl.jar"), libsFolder);
+            checkAndCopyJar("yield-utils.jar", Main.class.getResourceAsStream("/engine/yield-utils.jar"), libsFolder);
+        } catch (IOException e) {
+            UIUtils.error(e);
+        }
+    }
+
+    private static void checkAndCopyJar(String libName, InputStream lib, File to) throws IOException {
+        File libFile = new File(to, libName);
+        if (libFile.exists()) return;
+
+        Files.copy(lib, libFile.toPath());
+    }
+
+    public static File getLibsFolder() {
+        File libsFolder = new File(getProjectFolder(), "libs");
+        if (!libsFolder.isDirectory()) {
+            if (!libsFolder.mkdir()) {
+                UIUtils.error(new IllegalStateException("Could not create libs folder"));
+            }
+        }
+        return libsFolder;
     }
 
     public static File getBuildFolder() {

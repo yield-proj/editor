@@ -160,7 +160,7 @@ public class GameEditor extends ProjectEditor<GameProject> {
     }
 
     public void buildProject() {
-        Process p = Main.executeBashCommand("find " + Main.getScriptsFolder() + " -name '*.java' | xargs javac -d " + Main.getBuildFolder(), false);
+        Process p = Main.executeBashCommand("find " + Main.getScriptsFolder() + " -name '*.java' | xargs javac -cp $(printf %s: " + Main.getLibsFolder() + "/*.jar) -d " + Main.getBuildFolder(), false);
 
         try {
             StringBuilder err = new StringBuilder();
@@ -409,6 +409,13 @@ public class GameEditor extends ProjectEditor<GameProject> {
         }
 
         buildMenu.addSeparator();
+
+        buildMenu.add(new AbstractAction("Copy Engine") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Main.copyEngineLibs();
+            }
+        });
 
         JMenu gitMenu = new JMenu("Git");
         gitMenu.setMnemonic('G');
